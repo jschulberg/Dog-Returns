@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 # Data files
-Master_Adoption_List.csv
+Data/Master_Adoption_List.csv
