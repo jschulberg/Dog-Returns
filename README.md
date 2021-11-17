@@ -1,4 +1,11 @@
-# Final Project Proposal: Lucky Dog Animal Rescue Returns Classification
+# Lucky Dog Animal Rescue Returns Classification
+
+## Repository Structure
+
+| Folder | Description |
+| ------ | ------ |
+| Code | Python code related to the analysis |
+| Data | Data used in the analysis |
 
 ## Problem Statement
 For the final project, we will be analyzing a dataset from Lucky Dog Animal Rescue (LDAR), a nonprofit dedicated to rescuing homeless, neglected, and abandoned animals from euthanasia in kill shelters and getting them adopted into their forever homes. LDAR educates the community and all pet parents on responsible pet parenting, including the importance of spay/neuter, obedience training, and good nutrition.
