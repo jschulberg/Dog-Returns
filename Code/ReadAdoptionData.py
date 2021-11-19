@@ -186,7 +186,11 @@ adoption_date_all_cleaned['MIX'] = adoption_date_all_cleaned['MIX'].combine_firs
 adoption_date_all_cleaned['SECONDARY BREED'] = adoption_date_all_cleaned['SECONDARY BREED'].combine_first(adoption_date_all_cleaned['Secondary Breed'])
 # If there's a secondary breed, assign yes to the 'MIX' column
 adoption_date_all_cleaned.loc[~(adoption_date_all_cleaned['SECONDARY BREED'].isna()), 'MIX'] = 'Mix'
+
+# Combine spay/neutered columns
 adoption_date_all_cleaned['SPAYED/NEUTERED'] = adoption_date_all_cleaned['SPAYED/NEUTERED'].combine_first(adoption_date_all_cleaned['SPAYED/\nNEUTERED'])
+# If there's a date for spayed/neutered, automatically put a 'Y' in the column
+
 
 # Drop unneccessary columns
 adoption_date_all_cleaned = adoption_date_all_cleaned.drop(columns = ['Age Measure', 'COAT PATTERN',
@@ -220,7 +224,7 @@ adoption_date_all_cleaned['ID'] = adoption_date_all_cleaned['ID'].str.strip()
 #%% Merge these new adoption and birth dates back in
 all_dates2 = all_dates.merge(adoption_date_all_cleaned[['ID', 'BIRTHDATE', 'DATE ADOPTED', 'MIX', 'BREED',
                                                         'AGE', 'AGE MEASURE', 'SECONDARY BREED', 'SPAYED/NEUTERED',
-                                                        'GENDER']],
+                                                        'GENDER', 'HEARTWORM?', 'SIZE']],
                              how = 'outer',
                              on = 'ID')
 
@@ -240,9 +244,10 @@ master_dog_adoption = pd.merge(dog_list_deduped,
 master_dog_adoption['BREED MIXES'] = master_dog_adoption['BREED MIXES'].combine_first(master_dog_adoption['BREED'])
 master_dog_adoption['AGE_x'] = master_dog_adoption['AGE_x'].combine_first(master_dog_adoption['AGE_y'])
 master_dog_adoption['SEX'] = master_dog_adoption['SEX'].combine_first(master_dog_adoption['GENDER'])
+master_dog_adoption['HW'] = master_dog_adoption['HW'].combine_first(master_dog_adoption['HEARTWORM?'])
+master_dog_adoption['WEIGHT'] = master_dog_adoption['WEIGHT'].combine_first(master_dog_adoption['SIZE'])
 
-master_dog_adoption = master_dog_adoption.drop(columns = ['BREED', 'AGE_y'
-                                          ]) \
+master_dog_adoption = master_dog_adoption.drop(columns = ['BREED', 'AGE_y', 'GENDER', 'SIZE', 'HEARTWORM?']) \
                                             .rename(columns = {'AGE_x': 'AGE'})
 
 
