@@ -180,14 +180,16 @@ adoption_date_all_cleaned = adoption_date_all.copy().loc[adoption_date_all['SPEC
 # Coalesce columns that should be the same (i.e. 'ID #' and 'ID')
 adoption_date_all_cleaned['AGE MEASURE'] = adoption_date_all_cleaned['AGE MEASURE'].combine_first(adoption_date_all_cleaned['Age Measure'])
 adoption_date_all_cleaned['BREED'] = adoption_date_all_cleaned['BREED'].combine_first(adoption_date_all_cleaned['COAT PATTERN'])
-adoption_date_all_cleaned['BREED'] = adoption_date_all_cleaned['BREED'].combine_first(adoption_date_all_cleaned['MIX'])
 adoption_date_all_cleaned['BREED'] = adoption_date_all_cleaned['BREED'].combine_first(adoption_date_all_cleaned['PRIMARY BREED'])
 adoption_date_all_cleaned['BREED'] = adoption_date_all_cleaned['BREED'].combine_first(adoption_date_all_cleaned['Primary Breed'])
+adoption_date_all_cleaned['MIX'] = adoption_date_all_cleaned['MIX'].combine_first(adoption_date_all_cleaned['Mix'])
 adoption_date_all_cleaned['SECONDARY BREED'] = adoption_date_all_cleaned['SECONDARY BREED'].combine_first(adoption_date_all_cleaned['Secondary Breed'])
+# If there's a secondary breed, assign yes to the 'MIX' column
+adoption_date_all_cleaned.loc[~(adoption_date_all_cleaned['SECONDARY BREED'].isna()), 'MIX'] = 'Mix'
 adoption_date_all_cleaned['SPAYED/NEUTERED'] = adoption_date_all_cleaned['SPAYED/NEUTERED'].combine_first(adoption_date_all_cleaned['SPAYED/\nNEUTERED'])
 
 # Drop unneccessary columns
-adoption_date_all_cleaned = adoption_date_all_cleaned.drop(columns = ['Age Measure', 'COAT PATTERN', 'MIX',
+adoption_date_all_cleaned = adoption_date_all_cleaned.drop(columns = ['Age Measure', 'COAT PATTERN',
                                           'PRIMARY BREED', 'Primary Breed', 
                                           'ADOPTER FIRST NAME', 'ADOPTER LAST NAME', 
                                           'ADOPTION COORDINATOR', 'Address', 
@@ -197,7 +199,7 @@ adoption_date_all_cleaned = adoption_date_all_cleaned.drop(columns = ['Age Measu
                                           'MICROCHIP COMPANY', 'MICROCHIP ID', 
                                           'Contract in ROVER', 'Info in ROVER',
                                           'Intake Age (Months)', 'Intake Number',
-                                          'SPAYED/\nNEUTERED', 'in process',
+                                          'SPAYED/\nNEUTERED', 'in process', 'Mix',
                                           'rescuegroups ID', 'scanned', 'Secondary Breed'
                                           ]) 
 
@@ -216,7 +218,9 @@ adoption_date_all_cleaned['ID'] = adoption_date_all_cleaned['ID'].str.strip()
 
                              
 #%% Merge these new adoption and birth dates back in
-all_dates2 = all_dates.merge(adoption_date_all_cleaned[['ID', 'BIRTHDATE', 'DATE ADOPTED']],
+all_dates2 = all_dates.merge(adoption_date_all_cleaned[['ID', 'BIRTHDATE', 'DATE ADOPTED', 'MIX', 'BREED',
+                                                        'AGE', 'AGE MEASURE', 'SECONDARY BREED', 'SPAYED/NEUTERED',
+                                                        'GENDER']],
                              how = 'outer',
                              on = 'ID')
 
@@ -231,6 +235,15 @@ master_dog_adoption = pd.merge(dog_list_deduped,
                                all_dates2,
                                on = 'ID',
                                how = 'left')
+
+# Coalesce columns like earlier
+master_dog_adoption['BREED MIXES'] = master_dog_adoption['BREED MIXES'].combine_first(master_dog_adoption['BREED'])
+master_dog_adoption['AGE_x'] = master_dog_adoption['AGE_x'].combine_first(master_dog_adoption['AGE_y'])
+master_dog_adoption['SEX'] = master_dog_adoption['SEX'].combine_first(master_dog_adoption['GENDER'])
+
+master_dog_adoption = master_dog_adoption.drop(columns = ['BREED', 'AGE_y'
+                                          ]) \
+                                            .rename(columns = {'AGE_x': 'AGE'})
 
 
 #%% Return a master dog list
