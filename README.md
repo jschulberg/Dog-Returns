@@ -6,6 +6,7 @@
 | ------ | ------ |
 | Code | Python code related to the analysis |
 | Data | Data used in the analysis |
+| Reports | Documentation related to the final analysis |
 
 ## Problem Statement
 For the final project, we will be analyzing a dataset from a nonprofit dedicated to rescuing homeless, neglected, and abandoned animals from euthanasia in kill shelters and getting them adopted into their forever homes. The nonprofit educates the community and all pet parents on responsible pet parenting, including the importance of spay/neuter, obedience training, and good nutrition.
