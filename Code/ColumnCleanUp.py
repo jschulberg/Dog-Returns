@@ -197,6 +197,54 @@ adopts_clean = clean_age(adopts_clean)
 print(adopts_clean.head())
 
 
+#%% Clean up the `BREED MIXES` column
+def clean_breed_mixes(df):
+    '''
+    This function is meant to clean up the `BREED MIXES` column, which denotes 
+    a dog's breed. Because there are so many combinations of different breeds for
+    dogs, the main purpose is to create multiple indicator columns for whether or
+    not a dog is a certain breed.
+    
+    '''
+    cleaned_df = df.copy()
+
+    # Uncomment the below line if you want to make the dataframes easier to
+    # work with, for testing purposes
+    # cleaned_df = cleaned_df[['DOG NAME', 'BREED MIXES', 'SECONDARY BREED', 'MIX']]
+
+    # Create a copy of the column that's proper title case
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED MIXES'].str.title()
+    
+    # Start by replacing any combination characters (/, w/, with, &, and) with ','
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.replace('&', ',', regex=True)
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.replace(', and', ',', regex=True)
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.replace('and ', ',', regex=True)
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.replace('with', ',', regex=True)
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.replace(' w/', ', ', regex=True)
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.replace(' w /', ', ', regex=True)
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.replace(' w ', ', ', regex=True)
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.replace('/', ', ', regex=True)
+    
+    # Format the commas a bit better
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.replace(' , ', ',', regex=True)
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.replace(', ,', ', ', regex=True)
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.replace(',  ', ',', regex=True)
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.replace(', ', ',', regex=True)
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.replace(',', ', ', regex=True)
+
+    # Remove extra whitespace from the color column
+    cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.strip()
+    
+    return cleaned_df
+
+
+adopts_clean = clean_breed_mixes(adopts_clean)
+
+print(adopts_clean['BREED MIXES'].value_counts())
+print(adopts_clean['BREED_MIXES_FIXED'].value_counts())
+
+
+
 #%% Clean up the `MIX` column
 def clean_mix(df):
     '''
@@ -208,14 +256,14 @@ def clean_mix(df):
         - Some dogs should be denoted as a 'Mix' because they're multiple breeds
             but the `MIX` column is null
             
-    Lastly, we create a boolean (1 for 'Mix', 0 otherwise)
+    Lastly, we create a boolean (1 for 'Mix', 0 otherwise).
     
     '''
     cleaned_df = df.copy()
 
     # Uncomment the below line if you want to make the dataframes easier to
     # work with, for testing purposes
-    cleaned_df = cleaned_df[['DOG NAME', 'BREED MIXES', 'SECONDARY BREED', 'MIX']]
+    # cleaned_df = cleaned_df[['DOG NAME', 'BREED MIXES', 'SECONDARY BREED', 'MIX']]
 
     # Start by making a copy of our 'COLOR' column and make it
     # title case so it's standardized
@@ -223,17 +271,16 @@ def clean_mix(df):
     
     # Any values in the `BREED MIXES` column that contain a comma
     # are likely a mix as well, so assign those the value 'Mix'
-    cleaned_df.loc[cleaned_df['BREED MIXES'].str.contains(',', na = False), 'MIX_FIXED'] = 'Mix'
-    cleaned_df.loc[cleaned_df['BREED MIXES'].str.contains('/', na = False), 'MIX_FIXED'] = 'Mix'
+    cleaned_df.loc[cleaned_df['BREED_MIXES_FIXED'].str.contains(',', na = False), 'MIX_FIXED'] = 'Mix'
 
     # Some dog breeds actually have the word 'mix' in them (i.e. 'Lab Mix').
     # Let's assign these as 'Mix' as well
-    cleaned_df.loc[cleaned_df['BREED MIXES'].str.contains('mix', case = False, na = False), 'MIX_FIXED'] = 'Mix'
+    cleaned_df.loc[cleaned_df['BREED_MIXES_FIXED'].str.lower().str.contains('mix', case = False, na = False), 'MIX_FIXED'] = 'Mix'
     
     # One-hot encode the new `MIX_FIXED` column
     cleaned_df['MIX_BOOL'] = cleaned_df['MIX_FIXED'].apply(lambda x: 1 if x == 'Mix' else 0)
     # Make sure NA's are represented by NA and not 0
-    cleaned_df.loc[(cleaned_df['BREED MIXES'].isna()) & (cleaned_df['MIX_FIXED'].isna()), 'MIX_BOOL'] = np.nan
+    cleaned_df.loc[(cleaned_df['BREED_MIXES_FIXED'].isna()) & (cleaned_df['MIX_FIXED'].isna()), 'MIX_BOOL'] = np.nan
     
     return cleaned_df
 
