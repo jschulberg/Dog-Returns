@@ -107,8 +107,8 @@ def clean_color(df):
     # We'll do so by creating booleans to detect whether or not a dog is 'tricolor'
     # or has a comma (from earlier) in it, denoting multiple colors.
     # Note: Some dogs have 'nan' (no) color, so replace these with falses
-    tri_color_bool = (cleaned_df['COLOR_FIXED'].str.contains('tri') & cleaned_df['COLOR_FIXED'].str.contains('color')) \
-        .replace(np.nan, False)
+    tri_color_bool = (cleaned_df['COLOR_FIXED'].str.contains('tri', na = False) & \
+                      cleaned_df['COLOR_FIXED'].str.contains('color', na = False))
     multi_color_bool = (cleaned_df['COLOR_FIXED'].str.contains(',', na = False))
 
     # Create our multi-color column accordingly
@@ -203,14 +203,14 @@ def clean_breed_mixes(df):
     This function is meant to clean up the `BREED MIXES` column, which denotes 
     a dog's breed. Because there are so many combinations of different breeds for
     dogs, the main purpose is to create multiple indicator columns for whether or
-    not a dog is a certain breed.
+    not a dog is a certain breed (Lab/Retriever, Shepherd, or Other).
     
     '''
     cleaned_df = df.copy()
 
     # Uncomment the below line if you want to make the dataframes easier to
     # work with, for testing purposes
-    # cleaned_df = cleaned_df[['DOG NAME', 'BREED MIXES', 'SECONDARY BREED', 'MIX']]
+    cleaned_df = cleaned_df[['DOG NAME', 'BREED MIXES', 'SECONDARY BREED', 'MIX']]
 
     # Create a copy of the column that's proper title case
     cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED MIXES'].str.title()
@@ -234,6 +234,29 @@ def clean_breed_mixes(df):
 
     # Remove extra whitespace from the color column
     cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED_MIXES_FIXED'].str.strip()
+
+    # Create indicator columns for whether or not a dog is one of the following breeds:
+    #   1. Retriever/Lab
+    #   2. Shepherd
+    #   3. Other Breed (Not Retriever/Lab/Shepherd)
+    cleaned_df.loc[(cleaned_df['BREED_MIXES_FIXED'].str.contains('Retriever', na = False)) | \
+                   (cleaned_df['BREED_MIXES_FIXED'].str.contains('Lab', na = False)), 
+                   'is_retriever'] = 1
+    cleaned_df.loc[~(cleaned_df['BREED_MIXES_FIXED'].str.contains('Retriever', na = False)) & \
+                   ~(cleaned_df['BREED_MIXES_FIXED'].str.contains('Lab', na = False)), 
+                   'is_retriever'] = 0
+
+    cleaned_df.loc[(cleaned_df['BREED_MIXES_FIXED'].str.contains('Shep', na = False)), 
+                   'is_shepherd'] = 1
+    cleaned_df.loc[~(cleaned_df['BREED_MIXES_FIXED'].str.contains('Shep', na = False)), 
+                   'is_shepherd'] = 0
+    # Build the `is_other_breed` column based on the previous two booleans
+    cleaned_df.loc[(cleaned_df['is_retriever'] == 0) & \
+                   (cleaned_df['is_shepherd'] == 0), 'is_other_breed'] = 1
+    cleaned_df.loc[(cleaned_df['is_retriever'] == 1) | \
+                   (cleaned_df['is_shepherd'] == 1) | \
+                   (cleaned_df['BREED_MIXES_FIXED'].isna()), 'is_other_breed'] = 0
+
     
     return cleaned_df
 
@@ -242,6 +265,9 @@ adopts_clean = clean_breed_mixes(adopts_clean)
 
 print(adopts_clean['BREED MIXES'].value_counts())
 print(adopts_clean['BREED_MIXES_FIXED'].value_counts())
+print(adopts_clean['is_retriever'].value_counts())
+print(adopts_clean['is_shepherd'].value_counts())
+print(adopts_clean['is_other_breed'].value_counts())
 
 
 
