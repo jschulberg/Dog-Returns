@@ -1,13 +1,12 @@
+
+#%%
 import pandas as pd
 import numpy as np
 import os
 import re
 
-adopts = pd.read_csv("../Data/Master_Adoption_List.csv")
-returns = pd.read_csv("../Data/Master_Returns_List.csv")
-
-# %%
-#adoption_original = pd.read_csv('Data/Master_Adoption_List.csv')
+adopts = pd.read_csv("Data/Master_Adoption_List.csv")
+returns = pd.read_csv("Data/Master_Returns_List.csv")
 
 
 # %% Clean up color column
@@ -33,7 +32,7 @@ def clean_color(df):
         - `contains_yellow` | Variable indicating whether 'tan/yellow/golden'
                                 appear in the `COLOR_FIXED` column.
     '''
-    cleaned_df = df.copy()
+    cleaned_df = df.copy(deep = True)
 
     # Uncomment the below line if you want to make the dataframes easier to
     # work with, for testing purposes
@@ -47,30 +46,30 @@ def clean_color(df):
     # the color column. Pull the correct value from the 'BREED MIXES' column.
     # Note: Some are 'nan' so replace these with False
     cleaned_df.loc[
-        cleaned_df['COLOR'].str.lower().str.lower().str.contains('screen').replace(np.nan, False), 'COLOR_FIXED'] = \
+        cleaned_df['COLOR'].str.lower().str.contains('screen', na = False), 'COLOR_FIXED'] = \
     cleaned_df['BREED MIXES']
     cleaned_df.loc[
-        cleaned_df['COLOR'].str.lower().str.lower().str.contains('walks alone').replace(np.nan, False), 'COLOR_FIXED'] = \
+        cleaned_df['COLOR'].str.lower().str.contains('walks alone', na = False), 'COLOR_FIXED'] = \
     cleaned_df['BREED MIXES']
-    cleaned_df.loc[cleaned_df['COLOR'].str.lower().str.lower().str.contains('month old puppy').replace(np.nan,
+    cleaned_df.loc[cleaned_df['COLOR'].str.lower().str.contains('month old puppy').replace(np.nan,
                                                                                                        False), 'COLOR_FIXED'] = \
     cleaned_df['BREED MIXES']
-    cleaned_df.loc[cleaned_df['COLOR'].str.lower().str.lower().str.contains('new this week').replace(np.nan,
+    cleaned_df.loc[cleaned_df['COLOR'].str.lower().str.contains('new this week').replace(np.nan,
                                                                                                      False), 'COLOR_FIXED'] = \
     cleaned_df['BREED MIXES']
     cleaned_df.loc[
-        cleaned_df['COLOR'].str.lower().str.lower().str.contains('kids').replace(np.nan, False), 'COLOR_FIXED'] = \
+        cleaned_df['COLOR'].str.lower().str.contains('kids', na = False), 'COLOR_FIXED'] = \
     cleaned_df['BREED MIXES']
     cleaned_df.loc[
-        cleaned_df['COLOR'].str.lower().str.lower().str.contains('energy').replace(np.nan, False), 'COLOR_FIXED'] = \
+        cleaned_df['COLOR'].str.lower().str.contains('energy', na = False), 'COLOR_FIXED'] = \
     cleaned_df['BREED MIXES']
-    cleaned_df.loc[cleaned_df['COLOR'].str.lower().str.contains('HW').replace(np.nan, False), 'COLOR_FIXED'] = \
-    cleaned_df['BREED MIXES']
-    cleaned_df.loc[
-        cleaned_df['COLOR'].str.lower().str.lower().str.contains('nervous').replace(np.nan, False), 'COLOR_FIXED'] = \
+    cleaned_df.loc[cleaned_df['COLOR'].str.lower().str.contains('HW', na = False), 'COLOR_FIXED'] = \
     cleaned_df['BREED MIXES']
     cleaned_df.loc[
-        cleaned_df['COLOR'].str.lower().str.lower().str.contains('retriever').replace(np.nan, False), 'COLOR_FIXED'] = \
+        cleaned_df['COLOR'].str.lower().str.contains('nervous', na = False), 'COLOR_FIXED'] = \
+    cleaned_df['BREED MIXES']
+    cleaned_df.loc[
+        cleaned_df['COLOR'].str.lower().str.contains('retriever', na = False), 'COLOR_FIXED'] = \
     cleaned_df['BREED MIXES']
 
     # Start by replacing any combination characters (/, w/, with, &, and) with ','
@@ -110,7 +109,7 @@ def clean_color(df):
     # Note: Some dogs have 'nan' (no) color, so replace these with falses
     tri_color_bool = (cleaned_df['COLOR_FIXED'].str.contains('tri') & cleaned_df['COLOR_FIXED'].str.contains('color')) \
         .replace(np.nan, False)
-    multi_color_bool = (cleaned_df['COLOR_FIXED'].str.contains(',')).replace(np.nan, False)
+    multi_color_bool = (cleaned_df['COLOR_FIXED'].str.contains(',', na = False))
 
     # Create our multi-color column accordingly
     cleaned_df.loc[tri_color_bool | multi_color_bool, 'multi_color'] = 1
@@ -131,11 +130,11 @@ def clean_color(df):
     # returned more frequently than other-colored dogs.
     cleaned_df.loc[
         (cleaned_df['COLOR_FIXED'].str.contains('black')) & ~(cleaned_df['COLOR_FIXED'].isna()), 'contains_black'] = 1
-    cleaned_df.loc[~(cleaned_df['COLOR_FIXED'].str.contains('black').replace(np.nan, False)) & ~(
+    cleaned_df.loc[~(cleaned_df['COLOR_FIXED'].str.contains('black', na = False)) & ~(
         cleaned_df['COLOR_FIXED'].isna()), 'contains_black'] = 0
     cleaned_df.loc[
         (cleaned_df['COLOR_FIXED'].str.contains('white')) & ~(cleaned_df['COLOR_FIXED'].isna()), 'contains_white'] = 1
-    cleaned_df.loc[~(cleaned_df['COLOR_FIXED'].str.contains('white').replace(np.nan, False)) & ~(
+    cleaned_df.loc[~(cleaned_df['COLOR_FIXED'].str.contains('white', na = False)) & ~(
         cleaned_df['COLOR_FIXED'].isna()), 'contains_white'] = 0
     # Create a boolean for tan/yellow/golden
     yellow_bool = (cleaned_df['COLOR_FIXED'].str.contains('tan')) | (
@@ -190,21 +189,60 @@ def clean_age(df):
     return cleaned_df
 
 
-dc = clean_weight(adopts)
-print(dc.head())
+adopts_clean = clean_color(adopts)
+adopts_clean = clean_weight(adopts_clean)
+adopts_clean = clean_sex(adopts_clean)
+adopts_clean = clean_age(adopts_clean)
+
+print(adopts_clean.head())
 
 
-# # Run the function
-# if 'COLOR' in adoption_original.columns:
-#     adoption_cleaned = clean_color(adoption_original)
-#
-#     # Print out our new results
-#     print(adoption_cleaned['COLOR'].value_counts())
-#     print(adoption_cleaned['COLOR_FIXED'].value_counts())
-#
-# else:
-#     print("WARNING! Unable to find the 'COLOR' column in the original dataset.",
-#           "Make sure the column is in the dataset and spelled correctly.")
-#
-# # %% Write out our final results to a new CSV
-# adoption_cleaned.to_csv('Data/Cleaned_Adoption_List.csv', index=False)
+#%% Clean up the `MIX` column
+def clean_mix(df):
+    '''
+    This function is meant to clean up the MIX column, which denotes whether a
+    dog is mixed breed. 
+    
+    Some of the issues with this column include:
+        - The word 'Mix' is not standard title-case (i.e. 'mix' instead of 'Mix')
+        - Some dogs should be denoted as a 'Mix' because they're multiple breeds
+            but the `MIX` column is null
+            
+    Lastly, we create a boolean (1 for 'Mix', 0 otherwise)
+    
+    '''
+    cleaned_df = df.copy()
+
+    # Uncomment the below line if you want to make the dataframes easier to
+    # work with, for testing purposes
+    cleaned_df = cleaned_df[['DOG NAME', 'BREED MIXES', 'SECONDARY BREED', 'MIX']]
+
+    # Start by making a copy of our 'COLOR' column and make it
+    # title case so it's standardized
+    cleaned_df['MIX_FIXED'] = cleaned_df['MIX'].str.title()
+    
+    # Any values in the `BREED MIXES` column that contain a comma
+    # are likely a mix as well, so assign those the value 'Mix'
+    cleaned_df.loc[cleaned_df['BREED MIXES'].str.contains(',', na = False), 'MIX_FIXED'] = 'Mix'
+    cleaned_df.loc[cleaned_df['BREED MIXES'].str.contains('/', na = False), 'MIX_FIXED'] = 'Mix'
+
+    # Some dog breeds actually have the word 'mix' in them (i.e. 'Lab Mix').
+    # Let's assign these as 'Mix' as well
+    cleaned_df.loc[cleaned_df['BREED MIXES'].str.contains('mix', case = False, na = False), 'MIX_FIXED'] = 'Mix'
+    
+    # One-hot encode the new `MIX_FIXED` column
+    cleaned_df['MIX_BOOL'] = cleaned_df['MIX_FIXED'].apply(lambda x: 1 if x == 'Mix' else 0)
+    # Make sure NA's are represented by NA and not 0
+    cleaned_df.loc[(cleaned_df['BREED MIXES'].isna()) & (cleaned_df['MIX_FIXED'].isna()), 'MIX_BOOL'] = np.nan
+    
+    return cleaned_df
+
+adopts_clean = clean_mix(adopts_clean)
+
+print(adopts_clean['MIX'].value_counts())
+print(adopts_clean['MIX_FIXED'].value_counts())
+print(adopts_clean['MIX_BOOL'].value_counts())
+
+
+# %% Write out our final results to a new CSV
+adopts_clean.to_csv('Data/Cleaned_Adoption_List.csv', index = False)
