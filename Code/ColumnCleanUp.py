@@ -5,8 +5,8 @@ import numpy as np
 import os
 import re
 
-adopts = pd.read_csv("Data/Master_Adoption_List.csv")
-returns = pd.read_csv("Data/Master_Returns_List.csv")
+adopts = pd.read_csv("../Data/Master_Adoption_List.csv")
+returns = pd.read_csv("../Data/Master_Returns_List.csv")
 
 
 # %% Clean up color column
@@ -148,7 +148,7 @@ def clean_color(df):
 def clean_sex(df):
 
     # update adoption list gender column to Male or Female and remove typos/misspellings
-    cleaned_df = df.copy()
+    cleaned_df = df.copy(deep = True)
     df_obj = cleaned_df.select_dtypes(['object'])
     cleaned_df[df_obj.columns] = df_obj.apply(lambda x: x.str.strip())
     cleaned_df.loc[cleaned_df["SEX"].str.contains("f", case = False, na = False, regex=False), 'SEX'] = "Female"
@@ -163,27 +163,33 @@ def clean_weight(df):
     cleaned_df = df.copy(deep = True)
     cleaned_df["WEIGHT2"] = cleaned_df.loc[~cleaned_df["WEIGHT"].str.contains("/", case=False, na=False, regex=False), 'WEIGHT']
     cleaned_df["WEIGHT2"] = cleaned_df["WEIGHT2"].str.extract("([-+]?\d*\.\d+|[-+]?\d+)").astype(float)
-    #cleaned_df.drop(["WEIGHT"])
-
-    #cleaned_df.rename({"WEIGHT2: WEIGHT"})
+    cleaned_df.drop(columns = ["WEIGHT"])
+    cleaned_df.rename({"WEIGHT2": "WEIGHT"})
+    cleaned_df.drop(columns=["WEIGHT2"])
 
     return cleaned_df
 
 
 def clean_age(df):
     # update adoption list age column, provide age in days
-    cleaned_df = df.copy()
+    cleaned_df = df.copy(deep = True)
 
     cleaned_df['DOB2'] = cleaned_df['AGE'].str.extract(r"(\d{1,2}[/. ](?:\d{1,2}|January|Jan)[/. ]\d{2}(?:\d{2})?)")
     cleaned_df['Date of Birth'] = cleaned_df['Date of Birth'].fillna(cleaned_df.pop('DOB2'))
-
-    print(cleaned_df.head())
 
     cleaned_df['Date of Birth'] = pd.to_datetime(cleaned_df['Date of Birth'], errors='coerce')
     cleaned_df['Adopted On'] = pd.to_datetime(cleaned_df['Adopted On'], errors='coerce')
     cleaned_df["Age at Adoption (days)"] = (cleaned_df['Adopted On'] - cleaned_df['Date of Birth']).dt.days
 
     cleaned_df.loc[cleaned_df["Age at Adoption (days)"].isnull(), "Age at Adoption (days)"] = (pd.to_datetime("today") - cleaned_df['Date of Birth']).dt.days
+
+
+    return cleaned_df
+
+
+def clean_BSW(df):
+    # update the BSW Column to be a boolean yes/no for screen and warning
+    cleaned_df = df.copy(deep=True)
 
 
     return cleaned_df
@@ -206,11 +212,11 @@ def clean_breed_mixes(df):
     not a dog is a certain breed (Lab/Retriever, Shepherd, or Other).
     
     '''
-    cleaned_df = df.copy()
+    cleaned_df = df.copy(deep = True)
 
     # Uncomment the below line if you want to make the dataframes easier to
     # work with, for testing purposes
-    cleaned_df = cleaned_df[['DOG NAME', 'BREED MIXES', 'SECONDARY BREED', 'MIX']]
+    cleaned_df = cleaned_df[['DOG NAME', 'BREED MIXES', 'SECONDARY BREED', 'MIX', 'ID']]
 
     # Create a copy of the column that's proper title case
     cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED MIXES'].str.title()
@@ -261,13 +267,13 @@ def clean_breed_mixes(df):
     return cleaned_df
 
 
-adopts_clean = clean_breed_mixes(adopts_clean)
+adopts_clean2 = clean_breed_mixes(adopts_clean)
 
-print(adopts_clean['BREED MIXES'].value_counts())
-print(adopts_clean['BREED_MIXES_FIXED'].value_counts())
-print(adopts_clean['is_retriever'].value_counts())
-print(adopts_clean['is_shepherd'].value_counts())
-print(adopts_clean['is_other_breed'].value_counts())
+print(adopts_clean2['BREED MIXES'].value_counts())
+print(adopts_clean2['BREED_MIXES_FIXED'].value_counts())
+print(adopts_clean2['is_retriever'].value_counts())
+print(adopts_clean2['is_shepherd'].value_counts())
+print(adopts_clean2['is_other_breed'].value_counts())
 
 
 
@@ -285,7 +291,7 @@ def clean_mix(df):
     Lastly, we create a boolean (1 for 'Mix', 0 otherwise).
     
     '''
-    cleaned_df = df.copy()
+    cleaned_df = df.copy(deep = True)
 
     # Uncomment the below line if you want to make the dataframes easier to
     # work with, for testing purposes
@@ -310,12 +316,13 @@ def clean_mix(df):
     
     return cleaned_df
 
-adopts_clean = clean_mix(adopts_clean)
+adopts_clean3 = clean_mix(adopts_clean2)
 
-print(adopts_clean['MIX'].value_counts())
-print(adopts_clean['MIX_FIXED'].value_counts())
-print(adopts_clean['MIX_BOOL'].value_counts())
+print(adopts_clean3['MIX'].value_counts())
+print(adopts_clean3['MIX_FIXED'].value_counts())
+print(adopts_clean3['MIX_BOOL'].value_counts())
 
 
 # %% Write out our final results to a new CSV
-adopts_clean.to_csv('Data/Cleaned_Adoption_List.csv', index = False)
+ac = adopts_clean.merge(adopts_clean3, how = "outer", on = ["ID", "DOG NAME"])
+ac.to_csv('../Data/Cleaned_Adoption_List.csv', index = False)
