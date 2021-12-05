@@ -4,9 +4,16 @@ import pandas as pd
 import numpy as np
 import os
 import re
+from itertools import product
 
-adopts = pd.read_csv("../Data/Master_Adoption_List.csv")
-returns = pd.read_csv("../Data/Master_Returns_List.csv")
+# It looks like Spyder and PyCharm have slightly different ways of reading
+# in data, so I'm including a try/except block so we don't have to change code.
+try:
+    adopts = pd.read_csv("../Data/Master_Adoption_List.csv")
+    returns = pd.read_csv("../Data/Master_Returns_List.csv")
+except:
+    adopts = pd.read_csv("Data/Master_Adoption_List.csv")
+    returns = pd.read_csv("Data/Master_Returns_List.csv")
 
 
 # %% Clean up color column
@@ -216,7 +223,7 @@ def clean_breed_mixes(df):
 
     # Uncomment the below line if you want to make the dataframes easier to
     # work with, for testing purposes
-    cleaned_df = cleaned_df[['DOG NAME', 'BREED MIXES', 'SECONDARY BREED', 'MIX', 'ID']]
+    # cleaned_df = cleaned_df[['DOG NAME', 'BREED MIXES', 'SECONDARY BREED', 'MIX']]
 
     # Create a copy of the column that's proper title case
     cleaned_df['BREED_MIXES_FIXED'] = cleaned_df['BREED MIXES'].str.title()
@@ -322,7 +329,99 @@ print(adopts_clean3['MIX'].value_counts())
 print(adopts_clean3['MIX_FIXED'].value_counts())
 print(adopts_clean3['MIX_BOOL'].value_counts())
 
+#%% Clean BEHAVIORAL NOTES column
+def clean_behav_notes(df):
+    '''
+    This function is meant to clean up the `BEHAVIORAL NOTES` column, which
+    describes any comments about a dog's temperament. There's not *too* much
+    cleaning here -- just some general standardization --, but there's a lot of
+    good notes about dogs' temperaments denoted here. To pull out this data, we'll:
+        
+        1. Split the behavioral notes on semicolon ';' and then create a counter
+            for how many behavioral issues/notes a dog has.
+        2. Create indicators for each major behavior.
+    
+    '''
+    cleaned_df = df.copy(deep = True)
+
+    cleaned_df['BEHAVIORAL_NOTES_FIXED'] = cleaned_df['BEHAVIORAL NOTES'].str.title().str.strip()
+    
+    # Uncomment the below line if you want to make the dataframes easier to
+    # work with, for testing purposes
+    # cleaned_df = cleaned_df[['DOG NAME', 'BEHAVIORAL NOTES', 'BEHAVIORAL_NOTES_FIXED']]
+    
+    # To see unique values in this column, reference the below lines, which
+    # split the behavioral notes by semicolon ';', pivot the notes into a single
+    # dataframe column, and then finds unique values.
+    behavioral_notes = cleaned_df[['BEHAVIORAL_NOTES_FIXED']].applymap(lambda x: x.split('; ') if isinstance(x, str) else [x])
+    behavioral_notes_pivoted = pd.DataFrame([j for i in behavioral_notes.values for j in product(*i)], columns = behavioral_notes.columns)
+    print(behavioral_notes_pivoted['BEHAVIORAL_NOTES_FIXED'].value_counts())
+    behavioral_notes_counts = behavioral_notes_pivoted['BEHAVIORAL_NOTES_FIXED'].value_counts()
+    behavioral_notes_pivoted['BEHAVIORAL_NOTES_FIXED'] = behavioral_notes_pivoted['BEHAVIORAL_NOTES_FIXED'].str.strip()
+    behavioral_notes_pivoted = behavioral_notes_pivoted.drop_duplicates()
+    
+    # Let's count up the number of behavioral notes for a given dog using the 
+    # splitting we just did
+    cleaned_df['num_behav_issues'] = behavioral_notes['BEHAVIORAL_NOTES_FIXED'].apply(lambda x: len(x))
+    
+    # Create indicator columns for the following variables
+    #   1. Puppy Screen
+    #   2. New This Week
+    #   3. Walks Alone Not Enough (Needs Running or Playtime)
+    #   4. Caution on Apartments
+    #   5. High/Medium Energy/Energetic
+    #   6. No Kids Under 12 Due to Shyness / Commitment to Socialization
+    #   7. Commitment to Training / Needs Training
+    cleaned_df.loc[cleaned_df['BEHAVIORAL_NOTES_FIXED'].str.contains('Puppy Screen', na = False), 
+                   'puppy_screen'] = 1
+    cleaned_df.loc[cleaned_df['puppy_screen'] != 1, 
+                   'puppy_screen'] = 0
+    cleaned_df.loc[cleaned_df['BEHAVIORAL_NOTES_FIXED'].str.contains('New This Week', na = False), 
+                   'new_this_week'] = 1
+    cleaned_df.loc[cleaned_df['new_this_week'] != 1, 
+                   'new_this_week'] = 0
+    cleaned_df.loc[cleaned_df['BEHAVIORAL_NOTES_FIXED'].str.contains('Walks Alone Not Enough', na = False), 
+                   'needs_play'] = 1
+    cleaned_df.loc[cleaned_df['needs_play'] != 1, 
+                   'needs_play'] = 0
+    cleaned_df.loc[cleaned_df['BEHAVIORAL_NOTES_FIXED'].str.contains('Caution On Apartments', na = False), 
+                   'no_apartments'] = 1
+    cleaned_df.loc[cleaned_df['no_apartments'] != 1, 
+                   'no_apartments'] = 0
+    cleaned_df.loc[cleaned_df['BEHAVIORAL_NOTES_FIXED'].str.contains('Energy', na = False), 
+                   'energetic'] = 1
+    cleaned_df.loc[cleaned_df['energetic'] != 1, 
+                   'energetic'] = 0
+    cleaned_df.loc[cleaned_df['BEHAVIORAL_NOTES_FIXED'].str.contains('Shy', na = False) | \
+                   cleaned_df['BEHAVIORAL_NOTES_FIXED'].str.contains('Socialization'), 
+                   'shyness'] = 1
+    cleaned_df.loc[cleaned_df['shyness'] != 1, 
+                   'shyness'] = 0
+    cleaned_df.loc[cleaned_df['BEHAVIORAL_NOTES_FIXED'].str.contains('Training', na = False), 
+                   'needs_training'] = 1
+    cleaned_df.loc[cleaned_df['needs_training'] != 1, 
+                   'needs_training'] = 0
+    
+    return cleaned_df, behavioral_notes_pivoted, behavioral_notes_counts
+
+adopts_clean4, behavioral_notes_pivoted, behavioral_notes_counts = clean_behav_notes(adopts_clean3)
+
+# print(adopts_clean4['BEHAVIORAL NOTES'].value_counts())
+# print(adopts_clean4['BEHAVIORAL_NOTES_FIXED'].value_counts())
+print('\nnum_behav_issues\n', adopts_clean4['num_behav_issues'].value_counts())
+print('\npuppy_screen\n', adopts_clean4['puppy_screen'].value_counts())
+print('\nnew_this_week\n', adopts_clean4['new_this_week'].value_counts())
+print('\nneeds_play\n', adopts_clean4['needs_play'].value_counts())
+print('\nno_apartments\n', adopts_clean4['no_apartments'].value_counts())
+print('\nenergetic\n', adopts_clean4['energetic'].value_counts())
+print('\nshyness\n', adopts_clean4['shyness'].value_counts())
+print('\nneeds_training\n', adopts_clean4['needs_training'].value_counts())
+
 
 # %% Write out our final results to a new CSV
 ac = adopts_clean.merge(adopts_clean3, how = "outer", on = ["ID", "DOG NAME"])
-ac.to_csv('../Data/Cleaned_Adoption_List.csv', index = False)
+
+try:
+    ac.to_csv('../Data/Cleaned_Adoption_List.csv', index = False)
+except:
+    adopts_clean4.to_csv('Data/Cleaned_Adoption_List.csv', index = False)
