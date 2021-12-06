@@ -418,10 +418,138 @@ print('\nshyness\n', adopts_clean4['shyness'].value_counts())
 print('\nneeds_training\n', adopts_clean4['needs_training'].value_counts())
 
 
+#%% Clean MEDICAL NOTES column
+def clean_med_notes(df):
+    '''
+    This function is meant to clean up the `MEDICAL NOTES` column, which
+    includes comments about a dog's health. 
+    
+    '''
+    cleaned_df = df.copy(deep = True)
+    
+    # Uncomment the below line if you want to make the dataframes easier to
+    # work with, for testing purposes
+    # cleaned_df = cleaned_df[['DOG NAME', 'MEDICAL NOTES']]
+    
+    # Create indicator columns for the following medical conditions
+    #   0. ANY medical condition (i.e. any value in the MEDICAL NOTES field)
+    #   1. Diarrhea
+    #   2. Ehrlichia (the disease Ehrlichiosis)/Lyme transmitted by ticks
+    #   3. Upper Respiratory Infection (URI)
+    #   4. Ear Infection
+    #   5. Tapeworm
+    #   6. General Infection
+    #   7. Demodex (Demodectic mange aka mites)
+    #   8. Car Sick
+    #   9. No exposure to dog parks yet (indicating a lack of exposure/immunity to potential
+    #       diseases)
+    #   10. Leg issues (amputated, sprained, swollen, lesions, etc.) :'(
+    #   11. Anaplasmosis
+    #   12. Teeth/dental issues
+    #   13. Weight issues (overweight)
+    #   14. Hair loss
+    #   15. Already received treatments/vaccinations
+    cleaned_df.loc[~(cleaned_df['MEDICAL NOTES'].isna()), 
+                   'has_med_issues'] = 1
+    cleaned_df.loc[cleaned_df['has_med_issues'] != 1, 
+                   'has_med_issues'] = 0
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains('diarrhea', case = False, na = False), 
+                   'diarrhea'] = 1
+    cleaned_df.loc[cleaned_df['diarrhea'] != 1, 
+                   'diarrhea'] = 0
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains('ehrlichi', case = False, na = False) |
+                   cleaned_df['MEDICAL NOTES'].str.contains('lyme', case = False, na = False) |
+                   cleaned_df['MEDICAL NOTES'].str.contains('ticks', case = False, na = False), 
+                   'ehrlichia'] = 1
+    cleaned_df.loc[cleaned_df['ehrlichia'] != 1, 
+                   'ehrlichia'] = 0
+    # URI: watch out for 'during'
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains('URI', case = True, na = False) |
+                   cleaned_df['MEDICAL NOTES'].str.contains('respiratory', case = False, na = False), 
+                   'uri'] = 1
+    cleaned_df.loc[cleaned_df['uri'] != 1, 
+                   'uri'] = 0
+    # Ear Infection: watch out for 'clear'
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains(' ear', case = False, na = False), 
+                   'ear_infection'] = 1
+    cleaned_df.loc[cleaned_df['ear_infection'] != 1, 
+                   'ear_infection'] = 0
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains('tapeworm', case = False, na = False), 
+                   'tapeworm'] = 1
+    cleaned_df.loc[cleaned_df['tapeworm'] != 1, 
+                   'tapeworm'] = 0
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains('infection', case = False, na = False), 
+                   'general_infection'] = 1
+    cleaned_df.loc[cleaned_df['general_infection'] != 1, 
+                   'general_infection'] = 0
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains('demode', case = False, na = False), 
+                   'demodex'] = 1
+    cleaned_df.loc[cleaned_df['demodex'] != 1, 
+                   'demodex'] = 0
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains('car', case = False, na = False) &
+                   cleaned_df['MEDICAL NOTES'].str.contains('sick', case = False, na = False), 
+                   'car_sick'] = 1
+    cleaned_df.loc[cleaned_df['car_sick'] != 1, 
+                   'car_sick'] = 0
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains('dog', case = False, na = False) &
+                   cleaned_df['MEDICAL NOTES'].str.contains('park', case = False, na = False) &
+                   cleaned_df['MEDICAL NOTES'].str.contains('not', case = False, na = False), 
+                   'dog_park'] = 1
+    cleaned_df.loc[cleaned_df['dog_park'] != 1, 
+                   'dog_park'] = 0
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains('leg', case = False, na = False), 
+                   'leg_issues'] = 1
+    cleaned_df.loc[cleaned_df['leg_issues'] != 1, 
+                   'leg_issues'] = 0
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains('anaplas', case = False, na = False), 
+                   'anaplasmosis'] = 1
+    cleaned_df.loc[cleaned_df['anaplasmosis'] != 1, 
+                   'anaplasmosis'] = 0
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains('teeth', case = False, na = False) |
+                   cleaned_df['MEDICAL NOTES'].str.contains('dental', case = False, na = False), 
+                   'dental_issues'] = 1
+    cleaned_df.loc[cleaned_df['dental_issues'] != 1, 
+                   'dental_issues'] = 0
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains('weight', case = False, na = False), 
+                   'weight_issues'] = 1
+    cleaned_df.loc[cleaned_df['weight_issues'] != 1, 
+                   'weight_issues'] = 0
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains('hair', case = False, na = False), 
+                   'hair_loss'] = 1
+    cleaned_df.loc[cleaned_df['hair_loss'] != 1, 
+                   'hair_loss'] = 0
+    cleaned_df.loc[cleaned_df['MEDICAL NOTES'].str.contains('treat', case = False, na = False) |
+                   cleaned_df['MEDICAL NOTES'].str.contains('vaccin', case = False, na = False),  
+                   'treated_vaccinated'] = 1
+    cleaned_df.loc[cleaned_df['treated_vaccinated'] != 1, 
+                   'treated_vaccinated'] = 0
+    
+    return cleaned_df
+
+adopts_clean5 = clean_med_notes(adopts_clean4)
+
+print('\nhas_med_issues\n', adopts_clean5['has_med_issues'].value_counts())
+print('\ndiarrhea\n', adopts_clean5['diarrhea'].value_counts())
+print('\nehrlichia\n', adopts_clean5['ehrlichia'].value_counts())
+print('\nuri\n', adopts_clean5['uri'].value_counts())
+print('\near_infection\n', adopts_clean5['ear_infection'].value_counts())
+print('\ntapeworm\n', adopts_clean5['tapeworm'].value_counts())
+print('\ngeneral_infection\n', adopts_clean5['general_infection'].value_counts())
+print('\ndemodex\n', adopts_clean5['demodex'].value_counts())
+print('\ncar_sick\n', adopts_clean5['car_sick'].value_counts())
+print('\ndog_park\n', adopts_clean5['dog_park'].value_counts())
+print('\nleg_issues\n', adopts_clean5['leg_issues'].value_counts())
+print('\nanaplasmosis\n', adopts_clean5['anaplasmosis'].value_counts())
+print('\ndental_issues\n', adopts_clean5['dental_issues'].value_counts())
+print('\nweight_issues\n', adopts_clean5['weight_issues'].value_counts())
+print('\nhair_loss\n', adopts_clean5['hair_loss'].value_counts())
+print('\ntreated_vaccinated\n', adopts_clean5['treated_vaccinated'].value_counts())
+
+    
 # %% Write out our final results to a new CSV
 ac = adopts_clean.merge(adopts_clean3, how = "outer", on = ["ID", "DOG NAME"])
 
 try:
     ac.to_csv('../Data/Cleaned_Adoption_List.csv', index = False)
 except:
-    adopts_clean4.to_csv('Data/Cleaned_Adoption_List.csv', index = False)
+    adopts_clean5.to_csv('Data/Cleaned_Adoption_List.csv', index = False)

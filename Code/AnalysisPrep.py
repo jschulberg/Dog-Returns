@@ -45,7 +45,31 @@ dogs_selected = dogs_joined[['ID', 'multi_color', 'num_colors', 'MIX_BOOL',
        'contains_yellow', 'WEIGHT2', 'Age at Adoption (days)', 
        'is_retriever', 'is_shepherd', 'is_other_breed', 'num_behav_issues',
        'puppy_screen', 'new_this_week', 'needs_play', 'no_apartments',
-       'energetic', 'shyness', 'needs_training', 'returned']]
+       'energetic', 'shyness', 'needs_training', 
+       'has_med_issues',
+    'diarrhea',
+    'ehrlichia',
+    'uri',
+    'ear_infection',
+    'tapeworm',
+    'general_infection',
+    'demodex',
+    'car_sick',
+    'dog_park',
+    'leg_issues',
+    'anaplasmosis',
+    'dental_issues',
+    'weight_issues',
+    'hair_loss',
+    'treated_vaccinated',
+       'returned']]
+
+# Check to see how many NAs we have in each column
+[print(col,
+       '\n',
+       dogs_selected[col].isna().value_counts(),
+       '\n\n') 
+ for col in dogs_selected.columns]
 
 # Apply PCA
 
