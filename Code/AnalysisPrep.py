@@ -149,7 +149,8 @@ pca_df = pd.concat([pca_df, dogs_selected[['returned']]], axis = 1)
 
 #%% Plot our results in 2-D
 plt.figure(figsize = (8,8))
-plt.scatter(pca_df['pca_1'], 
+
+scatter_plot = plt.scatter(pca_df['pca_1'], 
             pca_df['pca_2'], 
             c = pca_df['returned'],
             cmap = 'Purples',
@@ -158,6 +159,9 @@ plt.scatter(pca_df['pca_1'],
 plt.xlabel('Principal Component 1', fontsize = 14)
 plt.ylabel('Principal Component 2', fontsize = 14)
 plt.title('2 Component PCA', fontsize = 18)
+
+# Set legend (0 = Not Returned; 1 = Returned)
+plt.legend(*scatter_plot.legend_elements())
 
 plt.savefig('Images/Top 2 Principal Components.png', bbox_inches='tight')
 plt.show()
@@ -182,6 +186,9 @@ ax.set_xlabel('Principal Component 1', fontsize = 12)
 ax.set_ylabel('Principal Component 2', fontsize = 12)
 ax.set_zlabel('Principal Component 3', fontsize = 12)
 plt.title('3 Component PCA', fontsize = 18)
+
+# Set legend (0 = Not Returned; 1 = Returned)
+plt.legend(*scatter_plot.legend_elements())
 
 plt.savefig('Images/Top 3 Principal Components.png', bbox_inches='tight')
 plt.show()
