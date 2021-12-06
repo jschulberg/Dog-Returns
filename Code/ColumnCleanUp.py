@@ -299,7 +299,12 @@ def clean_dogs(df):
 
     return cleaned_df
 
+def clean_HW_FT(df):
+    # update the HW and FT Columns to be a boolean yes/no
+    cleaned_df = df.copy(deep=True)
+    cleaned_df[['HW_FIXED', 'FT_FIXED']] = cleaned_df[['HW', 'FT']].notnull().astype(int)
 
+    return cleaned_df
 
 adopts_clean = clean_color(adopts)
 adopts_clean = clean_weight(adopts_clean)
@@ -308,6 +313,7 @@ adopts_clean = clean_age(adopts_clean)
 adopts_clean = clean_BSW(adopts_clean)
 adopts_clean = clean_cats(adopts_clean)
 adopts_clean = clean_kids(adopts_clean)
+adopts_clean = clean_HW_FT(adopts_clean)
 
 print(adopts_clean.head())
 
