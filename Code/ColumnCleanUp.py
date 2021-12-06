@@ -278,6 +278,29 @@ def clean_kids(df):
     return cleaned_df
 
 
+def clean_dogs(df):
+    # update the dogs Column to be a boolean yes/no for dogs, as well as recommended/required
+    cleaned_df = df.copy(deep=True)
+
+    cleaned_df.loc[(cleaned_df['DOGS'].str.contains('y', case=False, na=False)) | \
+                   (cleaned_df['DOGS'].str.contains('yes', case=False, na=False)) | \
+                   (cleaned_df['DOGS'].str.contains('liv', case=False, na=False)) | \
+                   (cleaned_df['DOGS'].str.contains('required', case=False, na=False)) | \
+                   (cleaned_df['DOGS'].str.contains('recommended', case=False, na=False)) | \
+                   (cleaned_df['DOGS'].str.contains('need', case=False, na=False)),
+                   'DOGS_FIXED'] = 1
+    cleaned_df.loc[(cleaned_df['DOGS'].str.contains('required', case=False, na=False)) | \
+                   (cleaned_df['DOGS'].str.contains('recommended', case=False, na=False)) | \
+                   (cleaned_df['DOGS'].str.contains('need', case=False, na=False)),
+                   'DOGS_REQ'] = 1
+
+    cleaned_df['DOGS_FIXED'] = cleaned_df['DOGS_FIXED'].fillna(0)
+    cleaned_df['DOGS_REQ'] = cleaned_df['DOGS_REQ'].fillna(0)
+
+    return cleaned_df
+
+
+
 adopts_clean = clean_color(adopts)
 adopts_clean = clean_weight(adopts_clean)
 adopts_clean = clean_sex(adopts_clean)
