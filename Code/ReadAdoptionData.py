@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 import re
 
+
 #%% Read in Data
 def read_in_dog_list(file, year):
     '''
@@ -126,7 +127,9 @@ dog_list_dropped = dog_list_dropped.drop(columns = ['AC', 'FOSTER / BOARDING', '
                                                     'A/U', 'u', 'NOTES', 'BEHAVIORIAL NOTES'])
     
 # Remove any dogs that don't have IDs
-dog_list_dropped = dog_list_dropped.loc[~(pd.isnull(dog_list_dropped['ID'])), :]
+dog_list_dropped['ID'] = dog_list_dropped['ID'].astype(str).str.strip()
+dog_list_dropped = dog_list_dropped.loc[~(pd.isnull(dog_list_dropped['ID'])) & \
+                                        (dog_list_dropped['ID'] != 'nan'), :]
 
 # Remove dogs that only have a date as an ID since there'll be dupliates anyways...
 #dog_list_dropped = dog_list_dropped.loc[~(dog_list_dropped['ID'].str.contains('/')), :]
