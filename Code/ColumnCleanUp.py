@@ -197,7 +197,33 @@ def clean_age(df):
 def clean_BSW(df):
     # update the BSW Column to be a boolean yes/no for screen and warning
     cleaned_df = df.copy(deep=True)
-
+    cleaned_df.loc[(cleaned_df['BS/W'].str.contains('screen', case=False, na=False)) | \
+                   (cleaned_df['BS/W'].str.contains('BS', case=False, na=False)) | \
+                   (cleaned_df['BS/W'].str.contains('screeen', case=False, na=False)) & \
+                   ~(cleaned_df['BS/W'].str.contains('GS', case=False, na=False)),
+                   'BULLY_SCREEN'] = 1
+    cleaned_df.loc[(cleaned_df['BEHAVIORAL NOTES'].str.contains('bully', case=False, na=False)) & \
+                   (cleaned_df['BEHAVIORAL NOTES'].str.contains('screen', case= False, na=False)) & \
+                   ~(cleaned_df['BEHAVIORAL NOTES'].str.contains('puppy screen', case= False, na=False)),
+                   'BULLY_SCREEN'] = 1
+    cleaned_df.loc[(cleaned_df['BS/W'].str.contains('warning', case=False, na=False)) | \
+                   (cleaned_df['BS/W'].str.contains('BW', case=False, na=False)),
+                   'BULLY_WARNING'] = 1
+    cleaned_df.loc[(cleaned_df['BEHAVIORAL NOTES'].str.contains('bully', case=False, na=False)) & \
+                   (cleaned_df['BEHAVIORAL NOTES'].str.contains('warning', case=False, na=False)),
+                   'BULLY_WARNING'] = 1
+    cleaned_df.loc[~(cleaned_df['BEHAVIORAL NOTES'].str.contains('bully', case=False, na=False)) & \
+                   (cleaned_df['BEHAVIORAL NOTES'].str.contains('warning', case=False, na=False)) | \
+                   (cleaned_df['BEHAVIORAL NOTES'].str.contains('restriction', case=False, na=False)),
+                   'OTHER_WARNING'] = 1
+    cleaned_df.loc[(cleaned_df['BS/W'].str.contains('GSD', case=False, na=False)) | \
+                   (cleaned_df['BS/W'].str.contains('GS', case=False, na=False)) | \
+                   (cleaned_df['BS/W'].str.contains('German', case=False, na=False)) | \
+                   (cleaned_df['BS/W'].str.contains('husky', case=False, na=False)) ,
+                   'OTHER_WARNING'] = 1
+    cleaned_df['BULLY_SCREEN'] = cleaned_df['BULLY_SCREEN'].fillna(0)
+    cleaned_df['BULLY_WARNING'] = cleaned_df['BULLY_WARNING'].fillna(0)
+    cleaned_df['OTHER_WARNING'] = cleaned_df['OTHER_WARNING'].fillna(0)
 
     return cleaned_df
 
@@ -206,6 +232,7 @@ adopts_clean = clean_color(adopts)
 adopts_clean = clean_weight(adopts_clean)
 adopts_clean = clean_sex(adopts_clean)
 adopts_clean = clean_age(adopts_clean)
+adopts_clean = clean_BSW(adopts_clean)
 
 print(adopts_clean.head())
 
