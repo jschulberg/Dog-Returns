@@ -181,6 +181,8 @@ def clean_age(df):
     # update adoption list age column, provide age in days
     cleaned_df = df.copy(deep = True)
 
+    cleaned_df['AGE'] = cleaned_df['AGE'].str.replace(',', '.', regex=True)
+
     cleaned_df['DOB2'] = cleaned_df['AGE'].str.extract(r"(\d{1,2}[/. ](?:\d{1,2}|January|Jan)[/. ]\d{2}(?:\d{2})?)")
     cleaned_df['Date of Birth'] = cleaned_df['Date of Birth'].fillna(cleaned_df.pop('DOB2'))
 
@@ -190,6 +192,20 @@ def clean_age(df):
 
     cleaned_df.loc[cleaned_df["Age at Adoption (days)"].isnull(), "Age at Adoption (days)"] = (pd.to_datetime("today") - cleaned_df['Date of Birth']).dt.days
 
+    cleaned_df["AGE_TYPE"] = cleaned_df["AGE"].replace('(\d)', '', regex=True)
+    cleaned_df.loc[cleaned_df["AGE_TYPE"].str.contains("mo", case=False, na=False, regex=False), 'AGE_TYPE'] = 30
+    cleaned_df.loc[cleaned_df["AGE_TYPE"].str.contains("ye", case=False, na=False, regex=False), 'AGE_TYPE'] = 365
+    cleaned_df.loc[cleaned_df["AGE_TYPE"].str.contains("we", case=False, na=False, regex=False), 'AGE_TYPE'] = 52
+    cleaned_df.loc[cleaned_df["AGE_TYPE"].str.contains("day", case=False, na=False, regex=False), 'AGE_TYPE'] = 1
+    cleaned_df.loc[~cleaned_df.AGE_TYPE.isin([30,1,52,365]), "AGE_TYPE"] = 365
+
+    cleaned_df['AGE_TYPE'] = cleaned_df['AGE_TYPE'].fillna(365)
+
+    cleaned_df['AGE2'] = cleaned_df['AGE'].str.extract('([0-9][,.]*[0-9]*)').astype(float)
+    cleaned_df["AGE_FIXED"] = cleaned_df["AGE2"] * cleaned_df["AGE_TYPE"].astype(float)
+
+    cleaned_df.loc[cleaned_df["Age at Adoption (days)"] < 0] = np.nan
+    cleaned_df["Age at Adoption (days)"] = cleaned_df["Age at Adoption (days)"].fillna(cleaned_df.pop('AGE_FIXED'))
 
     return cleaned_df
 
