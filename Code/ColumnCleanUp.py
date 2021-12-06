@@ -228,7 +228,7 @@ def clean_BSW(df):
     return cleaned_df
 
 def clean_cats(df):
-    # update the BSW Column to be a boolean yes/no for screen and warning
+    # update the BSW Column to be a boolean yes/no for lived with cats and passed shelter test
     cleaned_df = df.copy(deep=True)
 
     cleaned_df['CATS'] = cleaned_df['CATS'].str.strip()
@@ -240,13 +240,14 @@ def clean_cats(df):
                    (cleaned_df['CATS'].str.contains('yes', case=False, na=False)) | \
                    (cleaned_df['CATS'].str.contains('live', case=False, na=False)),
                    'CATS_LIVED_WITH'] = 1
-    cleaned_df.loc[(cleaned_df['CATS'].str.contains(r'\bNo\b', case=False, na=False)),
+    cleaned_df.loc[(cleaned_df['CATS'].str.contains(r'\bNo\b', case=False, na=False)) | \
+                    (cleaned_df['CATS'].str.contains(r'\bn\b', case=False, na=False)),
                    'CATS_LIVED_WITH'] = 0
     cleaned_df.loc[(cleaned_df['CATS'].str.contains('passed', case=False, na=False)) | \
                    (cleaned_df['CATS'].str.contains('test', case=False, na=False)) | \
                    (cleaned_df['CATS'].str.contains('good', case=False, na=False)) | \
                    (cleaned_df['CATS'].str.contains('curious', case=False, na=False)) | \
-                   (cleaned_df['CATS'].str.contains('live', case=False, na=False)) | \
+                   (cleaned_df['CATS'].str.contains('liv', case=False, na=False)) | \
                    (cleaned_df['CATS'].str.contains('y', case=False, na=False)) | \
                    (cleaned_df['CATS'].str.contains('yes', case=False, na=False)) ,
                    'CATS_TEST'] = 1
@@ -261,12 +262,29 @@ def clean_cats(df):
     return cleaned_df
 
 
+def clean_kids(df):
+    # update the kids Column to be a boolean yes/no for kids or not
+    cleaned_df = df.copy(deep=True)
+
+    cleaned_df.loc[(cleaned_df['KIDS'].str.contains('y', case=False, na=False)) | \
+                   (cleaned_df['KIDS'].str.contains('yes', case=False, na=False)) | \
+                   (cleaned_df['KIDS'].str.contains('liv', case=False, na=False)),
+                   'KIDS_FIXED'] = 1
+    cleaned_df.loc[(cleaned_df['KIDS'].str.contains('no', case=False, na=False)) | \
+                   (cleaned_df['KIDS'].str.contains('n', case=False, na=False)) | \
+                   (cleaned_df['KIDS'].str.contains('caution', case=False, na=False)),
+                   'KIDS_FIXED'] = 0
+
+    return cleaned_df
+
+
 adopts_clean = clean_color(adopts)
 adopts_clean = clean_weight(adopts_clean)
 adopts_clean = clean_sex(adopts_clean)
 adopts_clean = clean_age(adopts_clean)
 adopts_clean = clean_BSW(adopts_clean)
 adopts_clean = clean_cats(adopts_clean)
+adopts_clean = clean_kids(adopts_clean)
 
 print(adopts_clean.head())
 
