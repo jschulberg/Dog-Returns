@@ -677,7 +677,7 @@ def clean_spay(df):
     
     # Uncomment the below line if you want to make the dataframes easier to
     # work with, for testing purposes
-    cleaned_df = cleaned_df[['DOG NAME', 'MEDICAL NOTES', 'SPAYED/NEUTERED']]
+#    cleaned_df = cleaned_df[['DOG NAME', 'MEDICAL NOTES', 'SPAYED/NEUTERED']]
     
     # Replace anything with 'Y' as 'Yes'; same for 'N' --> 'No'
     cleaned_df.loc[(cleaned_df['SPAYED/NEUTERED'].str.contains('y', case = False, na = False)) |
