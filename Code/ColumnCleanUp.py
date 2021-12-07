@@ -670,6 +670,26 @@ print('\nweight_issues\n', adopts_clean5['weight_issues'].value_counts())
 print('\nhair_loss\n', adopts_clean5['hair_loss'].value_counts())
 print('\ntreated_vaccinated\n', adopts_clean5['treated_vaccinated'].value_counts())
 
+#%% Clean up `SPAYED/NEUTERED` column
+def clean_spay(df):
+    
+    cleaned_df = df.copy(deep = True)
+    
+    # Uncomment the below line if you want to make the dataframes easier to
+    # work with, for testing purposes
+    cleaned_df = cleaned_df[['DOG NAME', 'MEDICAL NOTES', 'SPAYED/NEUTERED']]
+    
+    # Replace anything with 'Y' as 'Yes'; same for 'N' --> 'No'
+    cleaned_df.loc[(cleaned_df['SPAYED/NEUTERED'].str.contains('y', case = False, na = False)) |
+                    (cleaned_df['MEDICAL NOTES'].str.contains('s/n', case = False, na = False)), 
+                    'spay_neuter'] = 1
+    cleaned_df.loc[cleaned_df['SPAYED/NEUTERED'].str.contains('n', case = False, na = False), 'spay_neuter'] = 0
+    
+    return cleaned_df
+
+adopts_clean6 = clean_spay(adopts_clean5)
+
+print('\nSPAYED/NEUTERED\n', adopts_clean6['spay_neuter'].value_counts())
     
 # %% Write out our final results to a new CSV
 ac = adopts_clean.merge(adopts_clean3, how = "outer", on = ["ID", "DOG NAME"])
@@ -677,4 +697,4 @@ ac = adopts_clean.merge(adopts_clean3, how = "outer", on = ["ID", "DOG NAME"])
 try:
     ac.to_csv('../Data/Cleaned_Adoption_List.csv', index = False)
 except:
-    adopts_clean5.to_csv('Data/Cleaned_Adoption_List.csv', index = False)
+    adopts_clean6.to_csv('Data/Cleaned_Adoption_List.csv', index = False)
