@@ -298,16 +298,16 @@ def clean_dogs(df):
     # update the dogs Column to be a boolean yes/no for dogs, as well as recommended/required
     cleaned_df = df.copy(deep=True)
 
-    cleaned_df.loc[(cleaned_df['DOGS'].str.contains('y', case=False, na=False)) | \
-                   (cleaned_df['DOGS'].str.contains('yes', case=False, na=False)) | \
-                   (cleaned_df['DOGS'].str.contains('liv', case=False, na=False)) | \
-                   (cleaned_df['DOGS'].str.contains('required', case=False, na=False)) | \
-                   (cleaned_df['DOGS'].str.contains('recommended', case=False, na=False)) | \
-                   (cleaned_df['DOGS'].str.contains('need', case=False, na=False)),
+    cleaned_df.loc[(cleaned_df['DOGS IN HOME'].str.contains('y', case=False, na=False)) | \
+                   (cleaned_df['DOGS IN HOME'].str.contains('yes', case=False, na=False)) | \
+                   (cleaned_df['DOGS IN HOME'].str.contains('liv', case=False, na=False)) | \
+                   (cleaned_df['DOGS IN HOME'].str.contains('required', case=False, na=False)) | \
+                   (cleaned_df['DOGS IN HOME'].str.contains('recommended', case=False, na=False)) | \
+                   (cleaned_df['DOGS IN HOME'].str.contains('need', case=False, na=False)),
                    'DOGS_FIXED'] = 1
-    cleaned_df.loc[(cleaned_df['DOGS'].str.contains('required', case=False, na=False)) | \
-                   (cleaned_df['DOGS'].str.contains('recommended', case=False, na=False)) | \
-                   (cleaned_df['DOGS'].str.contains('need', case=False, na=False)),
+    cleaned_df.loc[(cleaned_df['DOGS IN HOME'].str.contains('required', case=False, na=False)) | \
+                   (cleaned_df['DOGS IN HOME'].str.contains('recommended', case=False, na=False)) | \
+                   (cleaned_df['DOGS IN HOME'].str.contains('need', case=False, na=False)),
                    'DOGS_REQ'] = 1
 
     cleaned_df['DOGS_FIXED'] = cleaned_df['DOGS_FIXED'].fillna(0)
@@ -329,6 +329,7 @@ adopts_clean = clean_age(adopts_clean)
 adopts_clean = clean_BSW(adopts_clean)
 adopts_clean = clean_cats(adopts_clean)
 adopts_clean = clean_kids(adopts_clean)
+adopts_clean = clean_dogs(adopts_clean)
 adopts_clean = clean_HW_FT(adopts_clean)
 
 print(adopts_clean.head())
