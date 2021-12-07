@@ -58,12 +58,12 @@ for file in os.listdir("Data"):
     if 'DOG LIST 2020' in file:
         print(f"Reading in {file}...")
         # Read in CSV and skip first row
-        dog_list_2021 = read_in_dog_list(file, '2021')
+        dog_list_2020 = read_in_dog_list(file, '2020')
 
     elif 'DOG LIST 2021' in file:
         print(f"Reading in {file}...")
         # Read in CSV and skip first row
-        dog_list_2020 = read_in_dog_list(file, '2020')
+        dog_list_2021 = read_in_dog_list(file, '2021')
         
     elif 'DOG LIST 2019' in file:
         print(f"Reading in {file}...")
@@ -109,7 +109,6 @@ dog_list_all['KIDS'] = dog_list_all['KIDS'].combine_first(dog_list_all['KIDS.1']
 dog_list_all['STATUS'] = dog_list_all['STATUS'].combine_first(dog_list_all['A/U'])
 dog_list_all['DOG NAME'] = dog_list_all['DOG NAME'].combine_first(dog_list_all['DOG'])
 dog_list_all['DOG NAME'] = dog_list_all['DOG NAME'].combine_first(dog_list_all['Dog'])
-dog_list_all['DOG NAME'] = dog_list_all['DOG NAME'].combine_first(dog_list_all['u'])
 dog_list_all['DOG NAME'] = dog_list_all['DOG NAME'].combine_first(dog_list_all['b'])
 dog_list_all['BEHAVIORAL NOTES'] = dog_list_all['BEHAVIORAL NOTES'].combine_first(dog_list_all['BEHAVIORIAL NOTES'])
 dog_list_all['BEHAVIORAL NOTES'] = dog_list_all['BEHAVIORAL NOTES'].combine_first(dog_list_all['NOTES'])
@@ -124,7 +123,7 @@ dog_list_dropped = dog_list_all.copy()
 dog_list_dropped = dog_list_dropped.drop(columns = ['AC', 'FOSTER / BOARDING', 'FOSTER EMAIL',
                                                     'FOSTER', 'ADOPTER', 'AGE MEASURE',
                                                     'ID #', 'KIDS.1', 'DOG', 'Dog', 'b',
-                                                    'A/U', 'u', 'NOTES', 'BEHAVIORIAL NOTES'])
+                                                    'A/U', 'NOTES', 'BEHAVIORIAL NOTES'])
     
 # Remove any dogs that don't have IDs
 dog_list_dropped['ID'] = dog_list_dropped['ID'].astype(str).str.strip()
@@ -231,7 +230,7 @@ all_dates2 = all_dates.merge(adoption_date_all_cleaned[['ID', 'BIRTHDATE', 'DATE
                              how = 'outer',
                              on = 'ID')
 
-# Coalesce our adoption and birth dates
+# Coalesce our adoption and birth dates.
 all_dates2['Adopted On'] = all_dates2['Adopted On'].combine_first(all_dates2['DATE ADOPTED'])
 all_dates2['Date of Birth'] = all_dates2['Date of Birth'].combine_first(all_dates2['BIRTHDATE'])
 all_dates2 = all_dates2.drop(columns = ['DATE ADOPTED', 'BIRTHDATE']).drop_duplicates(subset = ['ID'])
