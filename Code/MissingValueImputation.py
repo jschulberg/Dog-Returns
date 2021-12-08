@@ -66,38 +66,36 @@ dogs_selected = dogs_joined[['ID', 'SEX_Male', 'SEX_Female', 'multi_color', 'num
 
 
 
+def na_imputation(dogs_selected):
+    saved_vars = dogs_selected[['ID', "returned"]]
 
-saved_vars = dogs_selected[['ID', "returned"]]
+    ## scale data or not prior to imputation
+    # scaler = MinMaxScaler()
+    # scaler.fit(dogs_selected.drop(["ID", "returned"], axis = 1))
+    # scaled_values = scaler.transform(dogs_selected.drop(["ID", "returned"], axis = 1))
+    # data = pd.DataFrame(scaled_values, index = dogs_selected.index, columns = dogs_selected.drop(['ID', "returned"], axis = 1).columns)
+    # data[['ID', "returned"]] = saved_vars
+    data = dogs_selected.copy(deep=True)
 
-scaler = MinMaxScaler()
-scaler.fit(dogs_selected.drop(["ID", "returned"], axis = 1))
+    # set ID column as index
+    id = data[["ID"]]
+    data = data.set_index('ID')
+    col_names = data.columns
 
-## Calculate scaled values and store them in a separate object
-scaled_values = scaler.transform(dogs_selected.drop(["ID", "returned"], axis = 1))
+    ## fill in the missing values with KNN imputer
 
-## scale data or not prior to imputation
-# data = pd.DataFrame(scaled_values, index = dogs_selected.index, columns = dogs_selected.drop(['ID', "returned"], axis = 1).columns)
-# data[['ID', "returned"]] = saved_vars
-data = dogs_selected.copy(deep=True)
+    imputer = KNNImputer(n_neighbors=5, weights='uniform', metric='nan_euclidean')
+    imputer.fit(data)
 
-print(data.head(), data.dtypes)
-# set ID column as index
-id = data[["ID"]]
-data = data.set_index('ID')
-col_names = data.columns
+    impute1 = imputer.transform(data[:3000])
+    impute2 = imputer.transform(data[3001:6000])
+    impute3 = imputer.transform(data[6001:9000])
+    impute4 = imputer.transform(data[9001:])
 
-## fill in the missing values with KNN imputer
+    full_impute = np.concatenate((impute1, impute2, impute3, impute4))
 
-imputer = KNNImputer(n_neighbors=5, weights='uniform', metric='nan_euclidean')
-imputer.fit(data)
+    dogs_full = pd.DataFrame(full_impute, columns = col_names)
+    dogs_full["ID"] = id
+    dogs_full = dogs_full.set_index('ID')
 
-impute1 = imputer.transform(data[:5000])
-impute2 = imputer.transform(data[5001:9000])
-impute3 = imputer.transform(data[9001:])
-
-full_impute = np.concatenate((impute1, impute2, impute3))
-
-dogs_full = pd.DataFrame(full_impute, columns = col_names)
-dogs_full["ID"] = id
-
-print(dogs_full.head())
+    return dogs_full
