@@ -182,8 +182,15 @@ def clean_age(df):
     cleaned_df = df.copy(deep = True)
 
     cleaned_df['AGE'] = cleaned_df['AGE'].str.replace(',', '.', regex=True)
+    cleaned_df['AGE'] = cleaned_df['AGE'].str.split('as of').str[0]
+    cleaned_df['AGE'] = cleaned_df['AGE'].str.split('a/o').str[0]
+    cleaned_df['AGE'] = cleaned_df['AGE'].str.split('A/O').str[0]
+    cleaned_df['AGE'] = cleaned_df['AGE'].str.split('As of').str[0]
+    cleaned_df['AGE'] = cleaned_df['AGE'].str.split('As Of').str[0]
+    cleaned_df['AGE'] = cleaned_df['AGE'].str.split('A/0').str[0]
 
-    cleaned_df['DOB2'] = cleaned_df['AGE'].str.extract(r"(\d{1,2}[/. ](?:\d{1,2}|January|Jan)[/. ]\d{2}(?:\d{2})?)")
+    cleaned_df['DOB2'] = cleaned_df['AGE'].str.extract(r"(\d{1,2}[\/. ](?:\d{1,2}|January|Jan)[\/. ]\d{2}(?:\d{2})?)")
+    cleaned_df['DOB2'] = cleaned_df['AGE'].str.extract(r"(\d{1,4}[-. ](?:\d{1,2}|January|Jan)[-. ]\d{2}(?:\d{2})?)")
     cleaned_df['Date of Birth'] = cleaned_df['Date of Birth'].fillna(cleaned_df.pop('DOB2'))
 
     cleaned_df['Date of Birth'] = pd.to_datetime(cleaned_df['Date of Birth'], errors='coerce')
@@ -193,19 +200,24 @@ def clean_age(df):
     cleaned_df.loc[cleaned_df["Age at Adoption (days)"].isnull(), "Age at Adoption (days)"] = (pd.to_datetime("today") - cleaned_df['Date of Birth']).dt.days
 
     cleaned_df["AGE_TYPE"] = cleaned_df["AGE"].replace('(\d)', '', regex=True)
+    cleaned_df['AGE_TYPE'] = cleaned_df['AGE_TYPE'].fillna(cleaned_df.pop('AGE MEASURE'))
     cleaned_df.loc[cleaned_df["AGE_TYPE"].str.contains("mo", case=False, na=False, regex=False), 'AGE_TYPE'] = 30
     cleaned_df.loc[cleaned_df["AGE_TYPE"].str.contains("ye", case=False, na=False, regex=False), 'AGE_TYPE'] = 365
+    cleaned_df.loc[cleaned_df["AGE_TYPE"].str.contains("yr", case=False, na=False, regex=False), 'AGE_TYPE'] = 365
     cleaned_df.loc[cleaned_df["AGE_TYPE"].str.contains("we", case=False, na=False, regex=False), 'AGE_TYPE'] = 52
     cleaned_df.loc[cleaned_df["AGE_TYPE"].str.contains("day", case=False, na=False, regex=False), 'AGE_TYPE'] = 1
     cleaned_df.loc[~cleaned_df.AGE_TYPE.isin([30,1,52,365]), "AGE_TYPE"] = 365
 
     cleaned_df['AGE_TYPE'] = cleaned_df['AGE_TYPE'].fillna(365)
+    cleaned_df.loc[cleaned_df.puppy_screen == 1, 'AGE_TYPE'] = 52
 
     cleaned_df['AGE2'] = cleaned_df['AGE'].str.extract('([0-9][,.]*[0-9]*)').astype(float)
     cleaned_df["AGE_FIXED"] = cleaned_df["AGE2"] * cleaned_df["AGE_TYPE"].astype(float)
 
     cleaned_df.loc[cleaned_df["Age at Adoption (days)"] < 0] = np.nan
     cleaned_df["Age at Adoption (days)"] = cleaned_df["Age at Adoption (days)"].fillna(cleaned_df.pop('AGE_FIXED'))
+
+    cleaned_df.loc[cleaned_df.ID == "OWNR-FD-19-1408", "Age at Adoption (days)"] = 728
 
     return cleaned_df
 
@@ -325,7 +337,6 @@ def clean_HW_FT(df):
 adopts_clean = clean_color(adopts)
 adopts_clean = clean_weight(adopts_clean)
 adopts_clean = clean_sex(adopts_clean)
-adopts_clean = clean_age(adopts_clean)
 adopts_clean = clean_BSW(adopts_clean)
 adopts_clean = clean_cats(adopts_clean)
 adopts_clean = clean_kids(adopts_clean)
@@ -690,11 +701,12 @@ def clean_spay(df):
 adopts_clean6 = clean_spay(adopts_clean5)
 
 print('\nSPAYED/NEUTERED\n', adopts_clean6['spay_neuter'].value_counts())
+
+adopts_clean6 = clean_age(adopts_clean6)
     
 # %% Write out our final results to a new CSV
-ac = adopts_clean.merge(adopts_clean3, how = "outer", on = ["ID", "DOG NAME"])
 
 try:
-    ac.to_csv('../Data/Cleaned_Adoption_List.csv', index = False)
+    adopts_clean6.to_csv('../Data/Cleaned_Adoption_List.csv', index = False)
 except:
     adopts_clean6.to_csv('Data/Cleaned_Adoption_List.csv', index = False)
