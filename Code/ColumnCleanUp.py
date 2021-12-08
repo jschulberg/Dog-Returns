@@ -285,9 +285,21 @@ def clean_cats(df):
                    (cleaned_df['CATS'].str.contains(r'\bNo\b', case=False, na=False)) | \
                    (cleaned_df['CATS'].str.contains('debatable', case=False, na=False)),
                    'CATS_TEST'] = 0
+    cleaned_df.loc[(cleaned_df['BEHAVIORAL NOTES'].str.contains('good with cats', case=False, na=False)) | \
+                   (cleaned_df['BEHAVIORAL NOTES'].str.contains('good with cats and kids', case=False, na=False)) | \
+                   (cleaned_df['BEHAVIORAL NOTES'].str.contains('good with cats & kids', case=False, na=False)),
+                   'CATS_TEST'] = 1
+    cleaned_df.loc[(cleaned_df['BEHAVIORAL NOTES'].str.contains('good with cats', case=False, na=False)) | \
+                   (cleaned_df['BEHAVIORAL NOTES'].str.contains('good with cats and kids', case=False, na=False)) | \
+                   (cleaned_df['BEHAVIORAL NOTES'].str.contains('good with cats & kids', case=False, na=False)),
+                   'CATS_LIVED_WITH'] = 1
+    cleaned_df.loc[(cleaned_df['BEHAVIORAL NOTES'].str.contains('no cats', case=False, na=False)),
+                   'CATS_LIVED_WITH'] = 0
+    cleaned_df.loc[(cleaned_df['BEHAVIORAL NOTES'].str.contains('no cats', case=False, na=False)),
+                   'CATS_TEST'] = 0
 
-    cleaned_df['CATS_LIVED_WITH'] = cleaned_df['CATS_LIVED_WITH'].fillna(0)
-    cleaned_df['CATS_TEST'] = cleaned_df['CATS_TEST'].fillna(0)
+    # cleaned_df['CATS_LIVED_WITH'] = cleaned_df['CATS_LIVED_WITH'].fillna(0)
+    # cleaned_df['CATS_TEST'] = cleaned_df['CATS_TEST'].fillna(0)
 
     return cleaned_df
 
@@ -304,6 +316,12 @@ def clean_kids(df):
                    (cleaned_df['KIDS'].str.contains('n', case=False, na=False)) | \
                    (cleaned_df['KIDS'].str.contains('caution', case=False, na=False)),
                    'KIDS_FIXED'] = 0
+    cleaned_df.loc[(cleaned_df['BEHAVIORAL NOTES'].str.contains('no kids', case=False, na=False)),
+                   'KIDS_FIXED'] = 0
+    cleaned_df.loc[(cleaned_df['BEHAVIORAL NOTES'].str.contains('good with kids', case=False, na=False)) | \
+                    (cleaned_df['BEHAVIORAL NOTES'].str.contains('good with cats and kids', case=False, na=False))| \
+                    (cleaned_df['BEHAVIORAL NOTES'].str.contains('good with cats & kids', case=False, na=False)),
+                   'KIDS_FIXED'] = 1
 
     return cleaned_df
 
@@ -318,13 +336,22 @@ def clean_dogs(df):
                    (cleaned_df['DOGS IN HOME'].str.contains('required', case=False, na=False)) | \
                    (cleaned_df['DOGS IN HOME'].str.contains('recommended', case=False, na=False)) | \
                    (cleaned_df['DOGS IN HOME'].str.contains('need', case=False, na=False)),
-                   'DOGS_FIXED'] = 1
+                   'DOGS_IN_HOME'] = 1
+    cleaned_df.loc[(cleaned_df['DOGS IN HOME'].str.contains('dog', case=False, na=False)) & \
+                   (cleaned_df['DOGS IN HOME'].str.contains('only', case=False, na=False)),
+                   'DOGS_IN_HOME'] = 0
     cleaned_df.loc[(cleaned_df['DOGS IN HOME'].str.contains('required', case=False, na=False)) | \
                    (cleaned_df['DOGS IN HOME'].str.contains('recommended', case=False, na=False)) | \
                    (cleaned_df['DOGS IN HOME'].str.contains('need', case=False, na=False)),
                    'DOGS_REQ'] = 1
+    cleaned_df.loc[(cleaned_df['BEHAVIORAL NOTES'].str.contains('dog', case=False, na=False)) & \
+                   (cleaned_df['BEHAVIORAL NOTES'].str.contains('req', case=False, na=False)) | \
+                   (cleaned_df['BEHAVIORAL NOTES'].str.contains('rec', case=False, na=False)),
+                   'DOGS_REQ'] = 1
+    cleaned_df.loc[(cleaned_df['BEHAVIORAL NOTES'].str.contains('dog', case=False, na=False)) & \
+                   (cleaned_df['BEHAVIORAL NOTES'].str.contains('only', case=False, na=False)),
+                   'DOGS_IN_HOME'] = 0
 
-    cleaned_df['DOGS_FIXED'] = cleaned_df['DOGS_FIXED'].fillna(0)
     cleaned_df['DOGS_REQ'] = cleaned_df['DOGS_REQ'].fillna(0)
 
     return cleaned_df
@@ -333,6 +360,8 @@ def clean_HW_FT(df):
     # update the HW and FT Columns to be a boolean yes/no
     cleaned_df = df.copy(deep=True)
     cleaned_df[['HW_FIXED', 'FT_FIXED']] = cleaned_df[['HW', 'FT']].notnull().astype(int)
+    cleaned_df.loc[cleaned_df["HW"] == "No", "HW_FIXED"] = 0
+    cleaned_df.loc[cleaned_df["FT"] == "No", "FT_FIXED"] = 0
 
     return cleaned_df
 
