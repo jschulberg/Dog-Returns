@@ -25,11 +25,15 @@ particularly meaningful.
 import pandas as pd
 import numpy as np
 import os
-import re
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
+import re # Used for Regex
+from sklearn.decomposition import PCA # Used for principal component analysis
+from sklearn.preprocessing import StandardScaler # Used for scaling data
 from matplotlib import pyplot as plt
-from mpl_toolkits import mplot3d
+from mpl_toolkits import mplot3d # Used for 3D plots
+from imblearn.over_sampling import ADASYN, SMOTE # Used for upsampling data
+from imblearn.under_sampling import RandomUnderSampler # Used for downsampling data
+from imblearn.pipeline import Pipeline # Used for building a resampling pipeline
+from collections import Counter # Used for counting distributions of data
 
 
 try:
@@ -195,3 +199,89 @@ plt.show()
 
 
 #%% Up/down-sample data
+# Before resampling our data, let's keep track of our count of returned vs. 
+# not returned
+counter = Counter(dogs_selected['returned'])
+print("Distribution of Returned vs. Not Returned:\n", counter)
+
+def resample_data(X, y):
+    
+    # Oversample the minority class to have 30% the number of data points
+    # as the original majority class. We'll use the Adaptive synthetic 
+    # sampling approach (ADASYN), which uses a density distribution to
+    # generate the new samples
+    over = ADASYN(sampling_strategy = .3)
+    # Undersample the majority class to have 50% more data points than the
+    # new minority class
+    under = RandomUnderSampler(sampling_strategy = .5)
+    # Chain the resampling steps into a pipeline
+    sampling_steps = [('o', over), ('u', under)]
+    samp_pipeline = Pipeline(steps = sampling_steps)
+
+    X_resampled, y_resampled = samp_pipeline.fit_resample(X, y)
+    
+    # Let's see the counter of the distribution of our new `y_resampled`
+    counter = Counter(y_resampled)
+    print("Resampled Distribution of Returned vs. Not Returned:\n", counter)    
+    
+    return X_resampled, y_resampled
+
+# resample our data
+X_resampled, y_resampled = resample_data(X, y)
+
+# Reapply PCA and plot
+pca_resampled = PCA().fit_transform(X_resampled)
+
+pca_resampled_df = pd.DataFrame(data = pca_resampled[:, :3], 
+                           columns = ['pca_resampled_1', 
+                                      'pca_resampled_2', 
+                                      'pca_resampled_3'])
+
+# Bring in the returned column from earlier
+pca_resampled_df = pd.concat([pca_resampled_df, 
+                              pd.DataFrame(data = y_resampled, 
+                                           columns = ['returned'])], axis = 1)
+
+plt.figure(figsize = (8,8))
+
+scatter_plot = plt.scatter(pca_resampled_df['pca_resampled_1'], 
+            pca_resampled_df['pca_resampled_2'], 
+            c = pca_resampled_df['returned'],
+            cmap = 'Purples',
+            edgecolor = 'Gray',
+            alpha = .25)
+plt.xlabel('Principal Component 1', fontsize = 14)
+plt.ylabel('Principal Component 2', fontsize = 14)
+plt.title('2 Component PCA on Oversampled\nData Using ADASYN', fontsize = 18)
+
+# Set legend (0 = Not Returned; 1 = Returned)
+plt.legend(*scatter_plot.legend_elements())
+
+plt.savefig('Images/Resampled - Top 2 Principal Components.png', bbox_inches='tight')
+plt.show()
+
+
+# Creating figure with a 3D projection
+fig = plt.figure(figsize = (10, 7))
+ax = plt.axes(projection ="3d")
+ 
+# Create a 3D scatter plot using the first three principal components
+ax.scatter3D(pca_resampled_df['pca_resampled_1'], 
+            pca_resampled_df['pca_resampled_2'],
+            pca_resampled_df['pca_resampled_3'], 
+            c = pca_resampled_df['returned'],
+            s = 35,
+            cmap = 'Purples',
+            edgecolor = 'Gray',
+            alpha = .4)
+ax.set_xlabel('Principal Component 1', fontsize = 12)
+ax.set_ylabel('Principal Component 2', fontsize = 12)
+ax.set_zlabel('Principal Component 3', fontsize = 12)
+plt.title('3 Component PCA on Oversampled\nData Using ADASYN', fontsize = 18)
+
+# Set legend (0 = Not Returned; 1 = Returned)
+plt.legend(*scatter_plot.legend_elements())
+
+plt.savefig('Images/Resampled - Top 3 Principal Components.png', bbox_inches='tight')
+plt.show()
+
