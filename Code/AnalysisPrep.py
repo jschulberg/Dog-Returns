@@ -61,7 +61,7 @@ print(dogs_joined['returned'].value_counts(normalize = True))
 
 #%% Apply data pre-processing steps
 # Only bring in the columns we care about
-dogs_selected = dogs_joined[['ID', 'multi_color', 'num_colors', 'MIX_BOOL', 
+dogs_selected = dogs_joined[['ID', 'SEX_Male', 'SEX_Female', 'multi_color', 'num_colors', 'MIX_BOOL',
         'contains_black', 'contains_white',
        'contains_yellow', 'WEIGHT2', 'Age at Adoption (days)', 
        'is_retriever', 'is_shepherd', 'is_other_breed', 'num_behav_issues',
@@ -73,8 +73,8 @@ dogs_selected = dogs_joined[['ID', 'multi_color', 'num_colors', 'MIX_BOOL',
        'CATS_LIVED_WITH',
        'CATS_TEST',
        'KIDS_FIXED',
-#       'DOGS_FIXED',
-#       'DOGS_REQ',
+       'DOGS_IN_HOME',
+       'DOGS_REQ',
        'has_med_issues',
     'diarrhea',
     'ehrlichia',
@@ -93,6 +93,7 @@ dogs_selected = dogs_joined[['ID', 'multi_color', 'num_colors', 'MIX_BOOL',
     'treated_vaccinated',
     'HW_FIXED', 
     'FT_FIXED',
+    'spay_neuter',
        'returned']]
 
 # Check to see how many NAs we have in each column
