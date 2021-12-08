@@ -197,9 +197,10 @@ def clean_age(df):
     cleaned_df['Adopted On'] = pd.to_datetime(cleaned_df['Adopted On'], errors='coerce')
     cleaned_df["Age at Adoption (days)"] = (cleaned_df['Adopted On'] - cleaned_df['Date of Birth']).dt.days
 
-    cleaned_df.loc[cleaned_df["Age at Adoption (days)"].isnull(), "Age at Adoption (days)"] = (pd.to_datetime("today") - cleaned_df['Date of Birth']).dt.days
+    #cleaned_df.loc[cleaned_df["Age at Adoption (days)"].isnull(), "Age at Adoption (days)"] = (pd.to_datetime("today") - cleaned_df['Date of Birth']).dt.days
 
     cleaned_df["AGE_TYPE"] = cleaned_df["AGE"].replace('(\d)', '', regex=True)
+    cleaned_df.loc[cleaned_df.puppy_screen == 1, 'AGE_TYPE'] = 52
     cleaned_df['AGE_TYPE'] = cleaned_df['AGE_TYPE'].fillna(cleaned_df.pop('AGE MEASURE'))
     cleaned_df.loc[cleaned_df["AGE_TYPE"].str.contains("mo", case=False, na=False, regex=False), 'AGE_TYPE'] = 30
     cleaned_df.loc[cleaned_df["AGE_TYPE"].str.contains("ye", case=False, na=False, regex=False), 'AGE_TYPE'] = 365
@@ -209,15 +210,16 @@ def clean_age(df):
     cleaned_df.loc[~cleaned_df.AGE_TYPE.isin([30,1,52,365]), "AGE_TYPE"] = 365
 
     cleaned_df['AGE_TYPE'] = cleaned_df['AGE_TYPE'].fillna(365)
-    cleaned_df.loc[cleaned_df.puppy_screen == 1, 'AGE_TYPE'] = 52
 
     cleaned_df['AGE2'] = cleaned_df['AGE'].str.extract('([0-9][,.]*[0-9]*)').astype(float)
+    cleaned_df.loc[cleaned_df.AGE2 >= 12, 'AGE_TYPE'] = 52
     cleaned_df["AGE_FIXED"] = cleaned_df["AGE2"] * cleaned_df["AGE_TYPE"].astype(float)
 
     cleaned_df.loc[cleaned_df["Age at Adoption (days)"] < 0] = np.nan
     cleaned_df["Age at Adoption (days)"] = cleaned_df["Age at Adoption (days)"].fillna(cleaned_df.pop('AGE_FIXED'))
 
     cleaned_df.loc[cleaned_df.ID == "OWNR-FD-19-1408", "Age at Adoption (days)"] = 728
+    cleaned_df.loc[cleaned_df["Adopted On"].isna(), "Age at Adoption (days)"] = np.nan
 
     return cleaned_df
 
