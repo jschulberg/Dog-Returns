@@ -161,6 +161,8 @@ def clean_sex(df):
     cleaned_df.loc[cleaned_df["SEX"].str.contains("f", case = False, na = False, regex=False), 'SEX'] = "Female"
     cleaned_df.loc[cleaned_df["SEX"].str.startswith("m", na = False), 'SEX'] = "Male"
     cleaned_df.loc[cleaned_df["SEX"].str.startswith("M", na = False), 'SEX'] = "Male"
+    one_hot = pd.get_dummies(cleaned_df.SEX, prefix='SEX')
+    cleaned_df = cleaned_df.join(one_hot)
 
     return cleaned_df
 
@@ -734,7 +736,10 @@ adopts_clean6 = clean_spay(adopts_clean5)
 print('\nSPAYED/NEUTERED\n', adopts_clean6['spay_neuter'].value_counts())
 
 adopts_clean6 = clean_age(adopts_clean6)
-    
+
+#remove rows that have all Nan values
+adopts_clean6.dropna(how="all")
+
 # %% Write out our final results to a new CSV
 
 try:
