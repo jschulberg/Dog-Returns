@@ -16,6 +16,10 @@ from sklearn.neural_network import MLPClassifier
 from sklearn import svm
 from ScalingAndImputation import na_imputation, scale_arr
 from AnalysisPrep import resample_data
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import tree
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import OneClassSVM
 
 
 try:
@@ -76,6 +80,7 @@ dogs_selected = dogs_joined[['ID', 'SEX_Male', 'SEX_Female', 'multi_color', 'num
                              'returned']]
 
 # imputes values, resamples data, scales, and divides data into xtest/train and ytest/train.
+cols = dogs_selected.drop(columns = ["ID", "returned"]).columns
 def data_prep(df):
     data = na_imputation(df)
     y = data.iloc[:,-1]
@@ -295,11 +300,70 @@ def classifier_NNet(xtrain, xtest, ytrain, ytest):
 
     return
 
+# Decision Tree
+def classifier_tree(xtrain, xtest, ytrain, ytest, cols):
+    dtc = DecisionTreeClassifier(random_state=24)
+    dtc.fit(xtrain, ytrain)
+    ypred = dtc.predict(xtest)
+
+    plt.figure(figsize=(18,18))
+    tree.plot_tree(dtc, feature_names = cols,filled = True, max_depth=3, fontsize=6)
+
+    try:
+        plt.savefig('Images/TreePlot.png')
+
+    except:
+        plt.savefig('../Images/TreePlot.png')
+
+    plt.show()
+
+    cf = metrics.confusion_matrix(ytest.flatten(), ypred)
+    ax = plt.subplot()
+    sns.heatmap(cf, annot=True, fmt='g', ax=ax);
+
+    ax.set_xlabel('Predicted labels');
+    ax.set_ylabel('True labels');
+    ax.set_title('Confusion Matrix - Decision Tree');
+    ax.xaxis.set_ticklabels(['Not Returned', 'Returned']);
+    ax.yaxis.set_ticklabels(['Not Returned', 'Returned'])
+
+    try:
+        plt.savefig('Images/CM_tree.png')
+
+    except:
+        plt.savefig('../Images/CM_tree.png')
+
+    plt.show()
+
+    calc_scores(cf, "Decision Tree")
+
+    return
 
 
+# Random Forest - In progress
+def classifier_RF(xtrain, xtest, ytrain, ytest):
+    dtc = DecisionTreeClassifier(random_state=24)
+    dtc.fit(xtrain, ytrain)
+    rf_misc = []
+    for i in range(1, 200):
+        rf = RandomForestClassifier(n_estimators = i,random_state=24)
+        rf.fit(xtrain, ytrain.values.ravel())
+        rf_misc.append(1 - rf.score(xtest, ytest.values.ravel()))
 
+    dtc_misc = 1 - dtc.score(xtest, ytest.values.ravel())
+
+
+    plt.plot(range(1, 200), rf_misc,  label="Random Forest Misclassification Rate")
+    plt.hlines(y=dtc_misc, xmin=0, xmax=200,colors='r', lw=2, label='CART Misclassification Rate')
+    plt.legend(loc="upper right", borderaxespad=0)
+    plt.xlabel('Number of Trees')
+    plt.ylabel('Error')
+    plt.show()
+
+    return
 
 
 
 xtrain, xtest, ytrain, ytest = data_prep(dogs_selected)
 classifier_NB(xtrain, xtest, ytrain, ytest)
+classifier_tree(xtrain, xtest, ytrain, ytest, cols)
