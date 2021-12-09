@@ -300,7 +300,7 @@ def clean_cats(df):
     cleaned_df.loc[(cleaned_df['BEHAVIORAL NOTES'].str.contains('no cats', case=False, na=False)),
                    'CATS_TEST'] = 0
 
-    # cleaned_df['CATS_LIVED_WITH'] = cleaned_df['CATS_LIVED_WITH'].fillna(0)
+    cleaned_df['CATS_LIVED_WITH'] = cleaned_df['CATS_LIVED_WITH'].fillna(0)
     # cleaned_df['CATS_TEST'] = cleaned_df['CATS_TEST'].fillna(0)
 
     return cleaned_df

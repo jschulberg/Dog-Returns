@@ -1,3 +1,4 @@
+
 import pandas as pd
 import numpy as np
 import sklearn
@@ -12,7 +13,7 @@ from sklearn import metrics
 from sklearn.neural_network import MLPClassifier
 from sklearn import svm
 from MissingValueImputation import na_imputation
-from AnalysisPrep import resample_data
+#from AnalysisPrep import resample_data
 
 
 try:
@@ -73,31 +74,41 @@ dogs_selected = dogs_joined[['ID', 'SEX_Male', 'SEX_Female', 'multi_color', 'num
                              'returned']]
 
 data = na_imputation(dogs_selected)
-print(data.isnull().sum().sum())
+#resample
+#scale
 
 y = data.iloc[:,-1]
 X = data.iloc[:,0:-1]
 xtrain, xtest, ytrain, ytest = train_test_split(X.to_numpy(), y.to_numpy(), test_size=0.2, random_state=0)
 
-#Naive bayes
+
+# Naive Bayes
+
 gnb = GaussianNB()
-ypred = gnb.fit(xtrain, ytrain).predict(xtest)
-print("NB: Number of mislabeled points out of a total %d points : %d" % (xtest.shape[0], (ytest != ypred).sum()))
+ypred = gnb.fit(xtrain, ytrain.flatten()).predict(xtest)
 
-#Logistic regression
-lr = LogisticRegression(random_state=0).fit(xtrain, ytrain)
-ypred2 = lr.predict(xtest)
-print("LR: Number of mislabeled points out of a total %d points : %d" % (xtest.shape[0], (ytest != ypred2).sum()))
+cf = metrics.confusion_matrix(ytest.flatten(), ypred)
+ax= plt.subplot()
+sns.heatmap(cf, annot=True, fmt='g', ax=ax);
 
-#KNN
-kn = KNeighborsClassifier(n_neighbors=3)
-kn = kn.fit(xtrain, ytrain)
-ypred3 = kn.predict(xtest)
-print("KNN: Number of mislabeled points out of a total %d points : %d" % (xtest.shape[0], (ytest != ypred3).sum()))
+ax.set_xlabel('Predicted labels');ax.set_ylabel('True labels');
+ax.set_title('Confusion Matrix');
+ax.xaxis.set_ticklabels(['0', '1']); ax.yaxis.set_ticklabels(['0', '1'])
+
+plt.show()
+df = pd.DataFrame(columns = ["Number", "Precision", "Recall", "F1"])
+
+for i in range(0,2):
+    p = cf[i,i]/sum(cf[:,i])
+    r = cf[i,i] / sum(cf[i])
+    f1 = 2/(p**-1 + r**-1)
+    l = [i,p,r,f1]
+    df.loc[len(df.index)] = l
+
+print(df)
 
 
-
-# #KNN (might need to reduce sample size)
+#KNN (might need to reduce sample size)
 
 kn = KNeighborsClassifier(n_neighbors=10)
 kn = kn.fit(xtrain, ytrain.flatten())

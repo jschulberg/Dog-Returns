@@ -67,14 +67,7 @@ dogs_selected = dogs_joined[['ID', 'SEX_Male', 'SEX_Female', 'multi_color', 'num
 
 
 def na_imputation(dogs_selected):
-    saved_vars = dogs_selected[['ID', "returned"]]
 
-    ## scale data or not prior to imputation
-    # scaler = MinMaxScaler()
-    # scaler.fit(dogs_selected.drop(["ID", "returned"], axis = 1))
-    # scaled_values = scaler.transform(dogs_selected.drop(["ID", "returned"], axis = 1))
-    # data = pd.DataFrame(scaled_values, index = dogs_selected.index, columns = dogs_selected.drop(['ID', "returned"], axis = 1).columns)
-    # data[['ID', "returned"]] = saved_vars
     data = dogs_selected.copy(deep=True)
 
     # set ID column as index
@@ -98,4 +91,12 @@ def na_imputation(dogs_selected):
     dogs_full["ID"] = id
     dogs_full = dogs_full.set_index('ID')
 
-    return dogs_full
+    return dogs_full.apply(pd.to_numeric)
+
+
+## scale data or not prior to imputation
+    # scaler = MinMaxScaler()
+    # scaler.fit(dogs_selected.drop(["ID", "returned"], axis = 1))
+    # scaled_values = scaler.transform(dogs_selected.drop(["ID", "returned"], axis = 1))
+    # data = pd.DataFrame(scaled_values, index = dogs_selected.index, columns = dogs_selected.drop(['ID', "returned"], axis = 1).columns)
+    # data[['ID', "returned"]] = saved_vars
