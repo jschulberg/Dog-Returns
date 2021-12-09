@@ -363,6 +363,7 @@ def clean_HW_FT(df):
     cleaned_df[['HW_FIXED', 'FT_FIXED']] = cleaned_df[['HW', 'FT']].notnull().astype(int)
     cleaned_df.loc[cleaned_df["HW"] == "No", "HW_FIXED"] = 0
     cleaned_df.loc[cleaned_df["FT"] == "No", "FT_FIXED"] = 0
+    cleaned_df.loc[(cleaned_df['DOG NAME'].str.contains('HW', case=False, na=False)), 'HW'] = 1
 
     return cleaned_df
 

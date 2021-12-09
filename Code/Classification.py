@@ -1,4 +1,3 @@
-
 import pandas as pd
 import numpy as np
 import sklearn
@@ -340,17 +339,23 @@ def classifier_tree(xtrain, xtest, ytrain, ytest, cols):
     return
 
 
-# Random Forest - In progress
+# Random Forest
 def classifier_RF(xtrain, xtest, ytrain, ytest):
     dtc = DecisionTreeClassifier(random_state=24)
     dtc.fit(xtrain, ytrain)
     rf_misc = []
     for i in range(1, 200):
         rf = RandomForestClassifier(n_estimators = i,random_state=24)
-        rf.fit(xtrain, ytrain.values.ravel())
-        rf_misc.append(1 - rf.score(xtest, ytest.values.ravel()))
+        rf.fit(xtrain, ytrain)
+        rf_misc.append(1 - rf.score(xtest, ytest))
 
-    dtc_misc = 1 - dtc.score(xtest, ytest.values.ravel())
+    min_value = min(rf_misc)
+    min_index = rf_misc.index(min_value)
+    rf_best = RandomForestClassifier(n_estimators=min_index, random_state=24)
+    rf_best.fit(xtrain, ytrain)
+    ypred = rf_best.predict(xtest)
+
+    dtc_misc = 1 - dtc.score(xtest, ytest)
 
 
     plt.plot(range(1, 200), rf_misc,  label="Random Forest Misclassification Rate")
@@ -358,12 +363,47 @@ def classifier_RF(xtrain, xtest, ytrain, ytest):
     plt.legend(loc="upper right", borderaxespad=0)
     plt.xlabel('Number of Trees')
     plt.ylabel('Error')
+
+    try:
+        plt.savefig('Images/RF_vs_DT.png')
+
+    except:
+        plt.savefig('../Images/RF_vs_DT.png')
+
     plt.show()
+
+    cf = metrics.confusion_matrix(ytest.flatten(), ypred)
+    ax = plt.subplot()
+    sns.heatmap(cf, annot=True, fmt='g', ax=ax);
+    title = 'Confusion Matrix - Random Forest with ' + str(min_index) + ' Trees'
+    ax.set_xlabel('Predicted labels');
+    ax.set_ylabel('True labels');
+    ax.set_title(title);
+    ax.xaxis.set_ticklabels(['Not Returned', 'Returned']);
+    ax.yaxis.set_ticklabels(['Not Returned', 'Returned'])
+
+    try:
+        plt.savefig('Images/CM_RF.png')
+
+    except:
+        plt.savefig('../Images/CM_RF.png')
+
+    plt.show()
+
+    calc_scores(cf, "Random Forest")
 
     return
 
 
 
 xtrain, xtest, ytrain, ytest = data_prep(dogs_selected)
+
+
 classifier_NB(xtrain, xtest, ytrain, ytest)
+classifier_KNN(xtrain, xtest, ytrain, ytest)
+classifier_LR(xtrain, xtest, ytrain, ytest)
+classifier_SVM(xtrain, xtest, ytrain, ytest)
+classifier_KSVM(xtrain, xtest, ytrain, ytest)
+classifier_NNet(xtrain, xtest, ytrain, ytest)
 classifier_tree(xtrain, xtest, ytrain, ytest, cols)
+classifier_RF(xtrain, xtest, ytrain, ytest)
