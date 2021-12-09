@@ -94,9 +94,10 @@ def na_imputation(dogs_selected):
     return dogs_full.apply(pd.to_numeric)
 
 
-## scale data or not prior to imputation
-    # scaler = MinMaxScaler()
-    # scaler.fit(dogs_selected.drop(["ID", "returned"], axis = 1))
-    # scaled_values = scaler.transform(dogs_selected.drop(["ID", "returned"], axis = 1))
-    # data = pd.DataFrame(scaled_values, index = dogs_selected.index, columns = dogs_selected.drop(['ID', "returned"], axis = 1).columns)
-    # data[['ID', "returned"]] = saved_vars
+## scale data
+def scale_arr(x_arr):
+    scaler = MinMaxScaler()
+    scaler.fit(x_arr)
+    scaled_x = scaler.transform(x_arr)
+
+    return scaled_x

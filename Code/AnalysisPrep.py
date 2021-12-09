@@ -132,7 +132,11 @@ plt.xlabel('Number of Components', fontsize = 14)
 plt.ylabel('Cumulative Variance\nExplained (%)', fontsize = 14)
 plt.title('% Variation Explained by PCA', fontsize = 18)
 
-plt.savefig('Images/% Variation Explained by PCA.png', bbox_inches='tight')
+try:
+    plt.savefig('Images/% Variation Explained by PCA.png', bbox_inches='tight')
+
+except:
+    plt.savefig('../Images/% Variation Explained by PCA.png', bbox_inches='tight')
 
 plt.show()
 
@@ -168,7 +172,12 @@ plt.title('2 Component PCA', fontsize = 18)
 # Set legend (0 = Not Returned; 1 = Returned)
 plt.legend(*scatter_plot.legend_elements())
 
-plt.savefig('Images/Top 2 Principal Components.png', bbox_inches='tight')
+try:
+    plt.savefig('Images/Top 2 Principal Components.png', bbox_inches='tight')
+
+except:
+    plt.savefig('../Images/Top 2 Principal Components.png', bbox_inches='tight')
+
 plt.show()
 
 
@@ -195,7 +204,12 @@ plt.title('3 Component PCA', fontsize = 18)
 # Set legend (0 = Not Returned; 1 = Returned)
 plt.legend(*scatter_plot.legend_elements())
 
-plt.savefig('Images/Top 3 Principal Components.png', bbox_inches='tight')
+try:
+    plt.savefig('Images/Top 3 Principal Components.png', bbox_inches='tight')
+
+except:
+    plt.savefig('../Images/Top 3 Principal Components.png', bbox_inches='tight')
+
 plt.show()
 
 
@@ -258,7 +272,12 @@ plt.title('2 Component PCA on Oversampled\nData Using ADASYN', fontsize = 18)
 # Set legend (0 = Not Returned; 1 = Returned)
 plt.legend(*scatter_plot.legend_elements())
 
-plt.savefig('Images/Resampled - Top 2 Principal Components.png', bbox_inches='tight')
+try:
+    plt.savefig('Images/Resampled - Top 2 Principal Components.png', bbox_inches='tight')
+
+except:
+    plt.savefig('../Images/Resampled - Top 2 Principal Components.png', bbox_inches='tight')
+
 plt.show()
 
 
@@ -283,6 +302,11 @@ plt.title('3 Component PCA on Oversampled\nData Using ADASYN', fontsize = 18)
 # Set legend (0 = Not Returned; 1 = Returned)
 plt.legend(*scatter_plot.legend_elements())
 
-plt.savefig('Images/Resampled - Top 3 Principal Components.png', bbox_inches='tight')
+try:
+    plt.savefig('Images/Resampled - Top 3 Principal Components.png', bbox_inches='tight')
+
+except:
+    plt.savefig('../Images/Resampled - Top 3 Principal Components.png', bbox_inches='tight')
+
 plt.show()
 

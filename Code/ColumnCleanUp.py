@@ -158,11 +158,9 @@ def clean_sex(df):
     cleaned_df = df.copy(deep = True)
     df_obj = cleaned_df.select_dtypes(['object'])
     cleaned_df[df_obj.columns] = df_obj.apply(lambda x: x.str.strip())
-    cleaned_df.loc[cleaned_df["SEX"].str.contains("f", case = False, na = False, regex=False), 'SEX'] = "Female"
-    cleaned_df.loc[cleaned_df["SEX"].str.startswith("m", na = False), 'SEX'] = "Male"
-    cleaned_df.loc[cleaned_df["SEX"].str.startswith("M", na = False), 'SEX'] = "Male"
-    one_hot = pd.get_dummies(cleaned_df.SEX, prefix='SEX')
-    cleaned_df = cleaned_df.join(one_hot)
+    cleaned_df.loc[cleaned_df["SEX"].str.contains("f", case = False, na = False, regex=False), 'SEX'] = 0
+    cleaned_df.loc[cleaned_df["SEX"].str.startswith("m", na = False), 'SEX'] = 1
+    cleaned_df.loc[cleaned_df["SEX"].str.startswith("M", na = False), 'SEX'] = 1
 
     return cleaned_df
 
@@ -355,6 +353,7 @@ def clean_dogs(df):
                    'DOGS_IN_HOME'] = 0
 
     cleaned_df['DOGS_REQ'] = cleaned_df['DOGS_REQ'].fillna(0)
+   # cleaned_df['DOGS_IN_HOME'] = cleaned_df['DOGS_IN_HOME'].fillna(1)
 
     return cleaned_df
 
