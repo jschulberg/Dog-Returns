@@ -19,6 +19,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn import tree
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import OneClassSVM
+import dataframe_image as dfi
 
 
 try:
@@ -80,6 +81,7 @@ dogs_selected = dogs_joined[['ID', 'SEX_Male', 'SEX_Female', 'multi_color', 'num
 
 # imputes values, resamples data, scales, and divides data into xtest/train and ytest/train.
 cols = dogs_selected.drop(columns = ["ID", "returned"]).columns
+
 def data_prep(df):
     data = na_imputation(df)
     y = data.iloc[:,-1]
@@ -120,10 +122,10 @@ def calc_scores(cf, classifier_type):
     table(ax, df)
 
     try:
-        plt.savefig('Images/Scores' + classifier_type +'.png')
+        dfi.export(df, 'Images/Scores' + classifier_type +'.png')
 
     except:
-        plt.savefig('../Images/Scores' + classifier_type +'.png')
+        dfi.export(df, '../Images/Scores' + classifier_type +'.png')
 
     plt.show()
 
