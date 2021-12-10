@@ -99,7 +99,7 @@ def data_prep(df):
     return xtrain, xtest, ytrain, ytest
 
 # calculate scores from each classifier and save into an image
-def calc_scores(cf, classifier_type):
+def calc_scores(cf, classifier_type, *df2):
     df = pd.DataFrame(columns=["Classifier", "Accuracy", "Misclassification","Precision", "Recall", "Specificity", "F1"])
 
     # calculate scoring measures
@@ -115,21 +115,16 @@ def calc_scores(cf, classifier_type):
     l2.insert(0, classifier_type)
     df.loc[0] = l2
 
-    ax = plt.subplot(111, frame_on=False)
-    ax.xaxis.set_visible(False)
-    ax.yaxis.set_visible(False)
-
-    table(ax, df)
-
     try:
         dfi.export(df, 'Images/Scores' + classifier_type +'.png')
 
     except:
         dfi.export(df, '../Images/Scores' + classifier_type +'.png')
 
-    plt.show()
 
-    return
+    print(df)
+
+    return df
 
 
 ########### The following functions run the classifier on the prepped data set, and return a confusion matrix
@@ -156,9 +151,9 @@ def classifier_NB(xtrain, xtest, ytrain, ytest):
 
     plt.show()
 
-    calc_scores(cf, "Naive Bayes")
+    c = calc_scores(cf, "Naive Bayes")
 
-    return
+    return c
 
 
 #KNN (might need to reduce sample size)
@@ -184,13 +179,13 @@ def classifier_KNN(xtrain, xtest, ytrain, ytest):
 
     plt.show()
 
-    calc_scores(cf, "KNN")
+    c = calc_scores(cf, "KNN")
 
-    return
+    return c
 
 #Logistic Regression
 def classifier_LR(xtrain, xtest, ytrain, ytest):
-    lr = LogisticRegression(random_state=0, max_iter=120).fit(xtrain, ytrain.flatten())
+    lr = LogisticRegression(random_state=0, max_iter=130).fit(xtrain, ytrain.flatten())
     ypred = lr.predict(xtest)
 
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
@@ -211,9 +206,9 @@ def classifier_LR(xtrain, xtest, ytrain, ytest):
 
     plt.show()
 
-    calc_scores(cf, "Logistic Regression")
+    c = calc_scores(cf, "Logistic Regression")
 
-    return
+    return c
 
 
 #SVM (might need to reduce sample size)
@@ -240,9 +235,9 @@ def classifier_SVM(xtrain, xtest, ytrain, ytest):
 
     plt.show()
 
-    calc_scores(cf, "SVM")
+    c = calc_scores(cf, "SVM")
 
-    return
+    return c
 
 #Kernel SVM (might need to reduce sample size)
 def classifier_KSVM(xtrain, xtest, ytrain, ytest):
@@ -268,9 +263,9 @@ def classifier_KSVM(xtrain, xtest, ytrain, ytest):
 
     plt.show()
 
-    calc_scores(cf, "Kernel SVM")
+    c = calc_scores(cf, "Kernel SVM")
 
-    return
+    return c
 
 
 #Neural networks
@@ -297,9 +292,9 @@ def classifier_NNet(xtrain, xtest, ytrain, ytest):
 
     plt.show()
 
-    calc_scores(cf, "Neural Networks")
+    c = calc_scores(cf, "Neural Networks")
 
-    return
+    return c
 
 # Decision Tree
 def classifier_tree(xtrain, xtest, ytrain, ytest, cols):
@@ -336,9 +331,9 @@ def classifier_tree(xtrain, xtest, ytrain, ytest, cols):
 
     plt.show()
 
-    calc_scores(cf, "Decision Tree")
+    c = calc_scores(cf, "Decision Tree")
 
-    return
+    return c
 
 
 # Random Forest
@@ -392,20 +387,33 @@ def classifier_RF(xtrain, xtest, ytrain, ytest):
 
     plt.show()
 
-    calc_scores(cf, "Random Forest")
+    c = calc_scores(cf, "Random Forest")
 
-    return
+    return c
 
 
 
 xtrain, xtest, ytrain, ytest = data_prep(dogs_selected)
 
 
-classifier_NB(xtrain, xtest, ytrain, ytest)
-classifier_KNN(xtrain, xtest, ytrain, ytest)
-classifier_LR(xtrain, xtest, ytrain, ytest)
-classifier_SVM(xtrain, xtest, ytrain, ytest)
-classifier_KSVM(xtrain, xtest, ytrain, ytest)
-classifier_NNet(xtrain, xtest, ytrain, ytest)
-classifier_tree(xtrain, xtest, ytrain, ytest, cols)
-classifier_RF(xtrain, xtest, ytrain, ytest)
+a = classifier_NB(xtrain, xtest, ytrain, ytest)
+b = classifier_KNN(xtrain, xtest, ytrain, ytest)
+a = pd.concat([a, b]) #################### check correct method
+b = classifier_LR(xtrain, xtest, ytrain, ytest)
+a = pd.concat([a, b])
+b = classifier_SVM(xtrain, xtest, ytrain, ytest)
+a = pd.concat([a, b])
+b = classifier_KSVM(xtrain, xtest, ytrain, ytest)
+a = pd.concat([a, b])
+b = classifier_NNet(xtrain, xtest, ytrain, ytest)
+a = pd.concat([a, b])
+b = classifier_tree(xtrain, xtest, ytrain, ytest, cols)
+a = pd.concat([a, b])
+b = classifier_RF(xtrain, xtest, ytrain, ytest)
+a = pd.concat([a, b])
+
+try:
+    dfi.export(a, 'Images/ScoresResults.png')
+
+except:
+    dfi.export(a, '../Images/ScoresResults.png')
