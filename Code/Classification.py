@@ -3,7 +3,7 @@ import numpy as np
 import sklearn
 from matplotlib.colors import ListedColormap
 from pandas.plotting import table
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
@@ -24,6 +24,9 @@ from sklearn import tree
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import OneClassSVM
 import dataframe_image as dfi
+import prince
+from sklearn.decomposition import PCA # Used for principal component analysis
+
 
 
 try:
@@ -99,6 +102,18 @@ def data_prep(df):
     # scale data
     print("Scaling data...")
     xdata = scale_arr(xdata)
+    
+    # Apply MCA (Multiple Correspondence Analysis), a version of PCA for
+    # numerical and categorical variables
+    # mca = prince.MCA(
+    #     n_components = 15,
+    #     n_iter = 50,
+    #     copy = True,
+    #     check_input = True,
+    #     engine = 'auto')
+    
+    # xdata_mca = np.array(mca.fit(xdata).transform(xdata))
+    # xdata_pca = PCA(n_components = 10).fit_transform(xdata)
 
     # split into test and train sets
     print("Splitting data into test/train sets...\n")
@@ -144,11 +159,28 @@ def calc_scores(cf, classifier_type, *df2):
 def classifier_NB(xtrain, xtest, ytrain, ytest):
     print(f"Running Naive Bayes...")
     gnb = GaussianNB()
-    ypred = gnb.fit(xtrain, ytrain.flatten()).predict(xtest)
+    
+    # Attempt to tune the Gaussian Naive Bayes model
+    params_NB = {'var_smoothing': np.logspace(0,-9, num = 100)}
+    
+    gs_NB = GridSearchCV(estimator = gnb, 
+                     param_grid=params_NB, 
+                     cv = 5, # Use 5 folds
+                     verbose = 1, 
+                     scoring = 'accuracy') 
+    gs_NB.fit(xtrain, ytrain)
+        
+
+    ypred = gs_NB.fit(xtrain, ytrain.flatten()).predict(xtest)
+    # ypred = gnb.fit(xtrain, ytrain.flatten()).predict(xtest)
 
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
     ax= plt.subplot()
-    sns.heatmap(cf, annot=True, fmt='g', ax=ax);
+    sns.heatmap(cf, 
+                annot=True, 
+                fmt='g', 
+                cmap = 'Purples',
+                ax=ax);
 
     ax.set_xlabel('Predicted labels');ax.set_ylabel('True labels');
     ax.set_title('Confusion Matrix - Naive Bayes');
@@ -175,8 +207,11 @@ def classifier_KNN(xtrain, xtest, ytrain, ytest):
     ypred = kn.predict(xtest)
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
     ax= plt.subplot()
-    sns.heatmap(cf, annot=True, fmt='g', ax=ax);
-
+    sns.heatmap(cf, 
+                annot=True, 
+                fmt='g', 
+                cmap = 'Purples',
+                ax=ax);
     ax.set_xlabel('Predicted labels');
     ax.set_ylabel('True labels');
     ax.set_title('Confusion Matrix - KNN');
@@ -203,7 +238,11 @@ def classifier_LR(xtrain, xtest, ytrain, ytest):
 
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
     ax= plt.subplot()
-    sns.heatmap(cf, annot=True, fmt='g', ax=ax);
+    sns.heatmap(cf, 
+                annot=True, 
+                fmt='g', 
+                cmap = 'Purples',
+                ax=ax);
 
     ax.set_xlabel('Predicted labels');
     ax.set_ylabel('True labels');
@@ -233,7 +272,12 @@ def classifier_SVM(xtrain, xtest, ytrain, ytest):
 
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
     ax= plt.subplot()
-    sns.heatmap(cf, annot=True, fmt='g', ax=ax);
+    sns.heatmap(cf, 
+            annot=True, 
+            fmt='g', 
+            cmap = 'Purples',
+            ax=ax);
+
 
     ax.set_xlabel('Predicted labels');
     ax.set_ylabel('True labels');
@@ -262,7 +306,12 @@ def classifier_KSVM(xtrain, xtest, ytrain, ytest):
 
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
     ax= plt.subplot()
-    sns.heatmap(cf, annot=True, fmt='g', ax=ax);
+    sns.heatmap(cf, 
+                annot=True, 
+                fmt='g', 
+                cmap = 'Purples',
+                ax=ax);
+
 
     ax.set_xlabel('Predicted labels');
     ax.set_ylabel('True labels');
@@ -292,7 +341,12 @@ def classifier_NNet(xtrain, xtest, ytrain, ytest):
 
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
     ax= plt.subplot()
-    sns.heatmap(cf, annot=True, fmt='g', ax=ax);
+    sns.heatmap(cf, 
+                annot=True, 
+                fmt='g', 
+                cmap = 'Purples',
+                ax=ax);
+
 
     ax.set_xlabel('Predicted labels');
     ax.set_ylabel('True labels');
@@ -332,7 +386,12 @@ def classifier_tree(xtrain, xtest, ytrain, ytest, cols):
 
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
     ax = plt.subplot()
-    sns.heatmap(cf, annot=True, fmt='g', ax=ax);
+    sns.heatmap(cf, 
+                annot=True, 
+                fmt='g', 
+                cmap = 'Purples',
+                ax=ax);
+
 
     ax.set_xlabel('Predicted labels');
     ax.set_ylabel('True labels');
@@ -389,7 +448,12 @@ def classifier_RF(xtrain, xtest, ytrain, ytest):
 
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
     ax = plt.subplot()
-    sns.heatmap(cf, annot=True, fmt='g', ax=ax);
+    sns.heatmap(cf, 
+                annot=True, 
+                fmt='g', 
+                cmap = 'Purples',
+                ax=ax);
+
     title = 'Confusion Matrix - Random Forest with ' + str(min_index) + ' Trees'
     ax.set_xlabel('Predicted labels');
     ax.set_ylabel('True labels');
