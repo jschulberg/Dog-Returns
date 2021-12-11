@@ -13,8 +13,12 @@ import seaborn as sns
 from sklearn import metrics
 from sklearn.neural_network import MLPClassifier
 from sklearn import svm
-from ScalingAndImputation import na_imputation, scale_arr
-from AnalysisPrep import resample_data
+try:
+    from ScalingAndImputation import na_imputation, scale_arr
+    from AnalysisPrep import resample_data
+except:
+    from Code.ScalingAndImputation import na_imputation, scale_arr
+    from Code.AnalysisPrep import resample_data    
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import tree
 from sklearn.ensemble import RandomForestClassifier
@@ -83,17 +87,21 @@ dogs_selected = dogs_joined[['ID', 'SEX_Male', 'SEX_Female', 'multi_color', 'num
 cols = dogs_selected.drop(columns = ["ID", "returned"]).columns
 
 def data_prep(df):
+    print("Imputing missing values...")
     data = na_imputation(df)
     y = data.iloc[:,-1]
     X = data.iloc[:,0:-1]
 
     # resample data
+    print("Resampling data...")
     xdata, ydata = resample_data(X.to_numpy(), y.to_numpy())
 
     # scale data
+    print("Scaling data...")
     xdata = scale_arr(xdata)
 
     # split into test and train sets
+    print("Splitting data into test/train sets...\n")
     xtrain, xtest, ytrain, ytest = train_test_split(xdata, ydata, test_size=0.2, random_state=0)
 
     return xtrain, xtest, ytrain, ytest
@@ -115,14 +123,16 @@ def calc_scores(cf, classifier_type, *df2):
     l2.insert(0, classifier_type)
     df.loc[0] = l2
 
-    try:
-        dfi.export(df, 'Images/Scores' + classifier_type +'.png')
+    # try:
+    #     dfi.export(df, 'Images/Scores' + classifier_type +'.png')
 
-    except:
-        dfi.export(df, '../Images/Scores' + classifier_type +'.png')
+    # except:
+    #     dfi.export(df, '../Images/Scores' + classifier_type +'.png')
 
 
-    print(df)
+    # print(df)
+    print(f"Accuracy: {df['Accuracy'].values[0]}\n")
+
 
     return df
 
@@ -132,6 +142,7 @@ def calc_scores(cf, classifier_type, *df2):
 
 # Naive Bayes
 def classifier_NB(xtrain, xtest, ytrain, ytest):
+    print(f"Running Naive Bayes...")
     gnb = GaussianNB()
     ypred = gnb.fit(xtrain, ytrain.flatten()).predict(xtest)
 
@@ -152,12 +163,13 @@ def classifier_NB(xtrain, xtest, ytrain, ytest):
     plt.show()
 
     c = calc_scores(cf, "Naive Bayes")
-
+    
     return c
 
 
 #KNN (might need to reduce sample size)
 def classifier_KNN(xtrain, xtest, ytrain, ytest):
+    print(f"Running KNN...")
     kn = KNeighborsClassifier(n_neighbors=10)
     kn = kn.fit(xtrain, ytrain.flatten())
     ypred = kn.predict(xtest)
@@ -180,11 +192,12 @@ def classifier_KNN(xtrain, xtest, ytrain, ytest):
     plt.show()
 
     c = calc_scores(cf, "KNN")
-
+    
     return c
 
 #Logistic Regression
 def classifier_LR(xtrain, xtest, ytrain, ytest):
+    print(f"Running Logistic Regression...")
     lr = LogisticRegression(random_state=0, max_iter=130).fit(xtrain, ytrain.flatten())
     ypred = lr.predict(xtest)
 
@@ -213,6 +226,7 @@ def classifier_LR(xtrain, xtest, ytrain, ytest):
 
 #SVM (might need to reduce sample size)
 def classifier_SVM(xtrain, xtest, ytrain, ytest):
+    print(f"Running SVM...")
     sv = svm.SVC()
     sv = sv.fit(xtrain, ytrain.flatten())
     ypred = sv.predict(xtest)
@@ -241,6 +255,7 @@ def classifier_SVM(xtrain, xtest, ytrain, ytest):
 
 #Kernel SVM (might need to reduce sample size)
 def classifier_KSVM(xtrain, xtest, ytrain, ytest):
+    print(f"Running Kernel SVM...")
     svk = svm.NuSVC(gamma = 'auto')
     svk = svk.fit(xtrain, ytrain.flatten())
     ypred = svk.predict(xtest)
@@ -270,6 +285,7 @@ def classifier_KSVM(xtrain, xtest, ytrain, ytest):
 
 #Neural networks
 def classifier_NNet(xtrain, xtest, ytrain, ytest):
+    print(f"Running Neural Network...")
     mlp = MLPClassifier(hidden_layer_sizes=(20,10),max_iter=500)
     mlp.fit(xtrain,ytrain.flatten())
     ypred = mlp.predict(xtest)
@@ -298,6 +314,7 @@ def classifier_NNet(xtrain, xtest, ytrain, ytest):
 
 # Decision Tree
 def classifier_tree(xtrain, xtest, ytrain, ytest, cols):
+    print(f"Running Decision Tree...")
     dtc = DecisionTreeClassifier(random_state=24)
     dtc.fit(xtrain, ytrain)
     ypred = dtc.predict(xtest)
@@ -338,6 +355,7 @@ def classifier_tree(xtrain, xtest, ytrain, ytest, cols):
 
 # Random Forest
 def classifier_RF(xtrain, xtest, ytrain, ytest):
+    print(f"Running Random Forest...")
     dtc = DecisionTreeClassifier(random_state=24)
     dtc.fit(xtrain, ytrain)
     rf_misc = []
@@ -392,28 +410,22 @@ def classifier_RF(xtrain, xtest, ytrain, ytest):
     return c
 
 
-
+print("Prepping data...")
 xtrain, xtest, ytrain, ytest = data_prep(dogs_selected)
 
+# Run all of our classifiers
+clf_results = classifier_NB(xtrain, xtest, ytrain, ytest)
+clf_results = pd.concat([classifier_KNN(xtrain, xtest, ytrain, ytest), clf_results])
+clf_results = pd.concat([classifier_LR(xtrain, xtest, ytrain, ytest), clf_results])
+clf_results = pd.concat([classifier_SVM(xtrain, xtest, ytrain, ytest), clf_results])
+clf_results = pd.concat([classifier_KSVM(xtrain, xtest, ytrain, ytest), clf_results])
+clf_results = pd.concat([classifier_NNet(xtrain, xtest, ytrain, ytest), clf_results])
+clf_results = pd.concat([classifier_tree(xtrain, xtest, ytrain, ytest, cols), clf_results])
+clf_results = pd.concat([classifier_RF(xtrain, xtest, ytrain, ytest), clf_results])
 
-a = classifier_NB(xtrain, xtest, ytrain, ytest)
-b = classifier_KNN(xtrain, xtest, ytrain, ytest)
-a = pd.concat([a, b]) #################### check correct method
-b = classifier_LR(xtrain, xtest, ytrain, ytest)
-a = pd.concat([a, b])
-b = classifier_SVM(xtrain, xtest, ytrain, ytest)
-a = pd.concat([a, b])
-b = classifier_KSVM(xtrain, xtest, ytrain, ytest)
-a = pd.concat([a, b])
-b = classifier_NNet(xtrain, xtest, ytrain, ytest)
-a = pd.concat([a, b])
-b = classifier_tree(xtrain, xtest, ytrain, ytest, cols)
-a = pd.concat([a, b])
-b = classifier_RF(xtrain, xtest, ytrain, ytest)
-a = pd.concat([a, b])
 
-try:
-    dfi.export(a, 'Images/ScoresResults.png')
+# try:
+#     dfi.export(a, 'Images/ScoresResults.png')
 
-except:
-    dfi.export(a, '../Images/ScoresResults.png')
+# except:
+#     dfi.export(a, '../Images/ScoresResults.png')
