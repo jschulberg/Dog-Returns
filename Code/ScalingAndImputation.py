@@ -90,7 +90,13 @@ def na_imputation(dogs_selected):
     dogs_full = pd.DataFrame(full_impute, columns = col_names)
     dogs_full["ID"] = id
     dogs_full = dogs_full.set_index('ID')
-
+    
+    # For any columns that are on the range of 0-1, the imputer may have put
+    # a value somewhere between 0 and 1...so use a cut-off of .5
+    for col in dogs_full:
+        if dogs_full[col].max() == 1:
+            dogs_full[col] = dogs_full[col].apply(lambda val: 1 if val > .5 else 0)
+            
     return dogs_full.apply(pd.to_numeric)
 
 
