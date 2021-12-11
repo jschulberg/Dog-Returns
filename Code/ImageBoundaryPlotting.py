@@ -21,8 +21,22 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import OneClassSVM
 import dataframe_image as dfi
 
+# if inputting data that has not already been PCA transformed, uncomment  lines 28-36.
+# make sure data is prepped as well with scaling and imputation and resampling
+def PCA_image_plot(xPCA, y):
 
-def PCA_image_plot(xPCA,xtrain, xtest, ytrain, ytest):
+    #performs PCA
+    # X = xPCA.to_numpy()
+    # m, n = X.shape
+    # C = np.matmul(X.T, X) / m
+    # d = 2  # 4 dimensions
+    # V, s, nh = np.linalg.svd(C)
+    #
+    # V = V[:, :d]
+    # xdata = np.dot(X, V)
+    # print(xdata)
+
+    xtrain, xtest, ytrain, ytest = train_test_split(xdata, y.to_numpy(), test_size=0.2, random_state=0)
 
     h = .02
     figure = plt.figure(figsize=(27, 9))
