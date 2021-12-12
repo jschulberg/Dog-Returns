@@ -19,7 +19,7 @@ try:
 except:
     from Code.ScalingAndImputation import na_imputation, scale_arr
     from Code.AnalysisPrep import resample_data    
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, export_text
 from sklearn import tree
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import OneClassSVM
@@ -117,7 +117,7 @@ def data_prep(df):
 
     # split into test and train sets
     print("Splitting data into test/train sets...\n")
-    xtrain, xtest, ytrain, ytest = train_test_split(xdata, ydata, test_size=0.2, random_state=0)
+    xtrain, xtest, ytrain, ytest = train_test_split(xdata, ydata, test_size=0.2)
 
     return xtrain, xtest, ytrain, ytest
 
@@ -179,6 +179,7 @@ def classifier_NB(xtrain, xtest, ytrain, ytest):
     sns.heatmap(cf, 
                 annot=True, 
                 fmt='g', 
+                cbar = False,
                 cmap = 'Purples',
                 ax=ax);
 
@@ -323,9 +324,7 @@ def classifier_LR(xtrain, xtest, ytrain, ytest):
     
     
     # Pull out the parameters from our best logistic regression classifier
-    lr = LogisticRegression(penalty = 'elasticnet',
-                            # solver = 'liblinear',
-                            max_iter = 200).fit(xtrain, ytrain.flatten())
+    lr = LogisticRegression(max_iter = 200).fit(xtrain, ytrain.flatten())
     ypred = lr.predict(xtest)
 
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
@@ -459,12 +458,21 @@ def classifier_NNet(xtrain, xtest, ytrain, ytest):
 # Decision Tree
 def classifier_tree(xtrain, xtest, ytrain, ytest, cols):
     print(f"Running Decision Tree...")
-    dtc = DecisionTreeClassifier(random_state=24)
+    dtc = DecisionTreeClassifier(random_state = 42)
     dtc.fit(xtrain, ytrain)
     ypred = dtc.predict(xtest)
 
-    plt.figure(figsize=(18,18))
-    tree.plot_tree(dtc, feature_names = cols,filled = True, max_depth=3, fontsize=6)
+    plt.figure(figsize=(24, 24))
+    tree.plot_tree(dtc, 
+                   feature_names = cols,
+                   class_names = ['Not Returned', 'Returned'],
+                   filled = True, 
+                   rounded = True,
+                   impurity = False,
+                   label = 'root',
+                   max_depth = 3, 
+                   fontsize = 20)
+    plt.title('Abbreviated Decision Tree (Depth = 2)', size = 48)
 
     try:
         plt.savefig('Images/TreePlot.png')
