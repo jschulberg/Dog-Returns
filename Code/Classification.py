@@ -3,7 +3,7 @@ import numpy as np
 import sklearn
 from matplotlib.colors import ListedColormap
 from pandas.plotting import table
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score, RepeatedStratifiedKFold
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
@@ -21,7 +21,7 @@ except:
     from Code.AnalysisPrep import resample_data    
 from sklearn.tree import DecisionTreeClassifier, export_text
 from sklearn import tree
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.svm import OneClassSVM
 import dataframe_image as dfi
 import prince
@@ -51,21 +51,39 @@ dogs_joined.loc[dogs_joined['returned'].isna(), 'returned'] = 0
 
 # %% Apply data pre-processing steps
 # Only bring in the columns we care about
-dogs_selected = dogs_joined[['ID', 'SEX_Male', 'SEX_Female', 'multi_color', 'num_colors', 'MIX_BOOL',
-                             'contains_black', 'contains_white',
-                             'contains_yellow', 'WEIGHT2', 'Age at Adoption (days)',
-                             'is_retriever', 'is_shepherd', 'is_other_breed', 'num_behav_issues',
-                             'puppy_screen', 'new_this_week', 'needs_play', 'no_apartments',
-                             'energetic', 'shyness', 'needs_training',
-                             'BULLY_SCREEN',
-                             'BULLY_WARNING',
-                             'OTHER_WARNING',
-                             'CATS_LIVED_WITH',
-                             'CATS_TEST',
-                             'KIDS_FIXED',
-                             'DOGS_IN_HOME',
-                             'DOGS_REQ',
-                             'has_med_issues',
+dogs_selected = dogs_joined[['ID', 
+                             'SEX', 
+                             'multi_color', 
+                             'num_colors', 
+                             'MIX_BOOL',
+                             'contains_black', 
+                             'contains_white',
+                            'contains_yellow', 
+                            'contains_dark',
+                            'WEIGHT2', 
+                            'Age at Adoption (days)', 
+                            'is_retriever', 
+                            'is_shepherd', 
+                            'is_terrier',
+                            'is_husky',
+                            'is_other_breed', 
+                             'num_behav_issues',
+                             'new_this_week',
+                            'puppy_screen', 
+                            'needs_play', 
+                            'no_apartments',
+                            'energetic', 
+                            'shyness', 
+                            'needs_training', 
+                            'BULLY_SCREEN',
+                            'BULLY_WARNING',
+                            'OTHER_WARNING',
+                            'CATS_LIVED_WITH',
+                            'CATS_TEST',
+                            'KIDS_FIXED',
+                            'DOGS_IN_HOME',
+                            'DOGS_REQ',
+                            'has_med_issues',
                              'diarrhea',
                              'ehrlichia',
                              'uri',
@@ -81,15 +99,17 @@ dogs_selected = dogs_joined[['ID', 'SEX_Male', 'SEX_Female', 'multi_color', 'num
                              'weight_issues',
                              'hair_loss',
                              'treated_vaccinated',
-                             'HW_FIXED',
+                             'HW_FIXED', 
                              'FT_FIXED',
                              'spay_neuter',
-                             'returned']]
+                            'returned']]
+
 
 # imputes values, resamples data, scales, and divides data into xtest/train and ytest/train.
 cols = dogs_selected.drop(columns = ["ID", "returned"]).columns
 
 def data_prep(df):
+    print("Prepping data...")
     print("Imputing missing values...")
     data = na_imputation(df)
     y = data.iloc[:,-1]
@@ -505,7 +525,13 @@ def classifier_tree(xtrain, xtest, ytrain, ytest, cols):
 
     plt.show()
 
+    print('*************** Decision Tree Summary ***************')
+    print('Classes: ', dtc.classes_)
+    print('Tree Depth: ', dtc.tree_.max_depth)
+    print('# of leaves: ', dtc.tree_.n_leaves)
+    print('# of features: ', dtc.n_features_)
     c = calc_scores(cf, "Decision Tree")
+    print('--------------------------------------------------------\n\n')
 
     return c
 
@@ -517,6 +543,10 @@ def classifier_RF(xtrain, xtest, ytrain, ytest):
     dtc.fit(xtrain, ytrain)
     rf_misc = []
     for i in range(1, 200):
+        # Progress check
+        if (i-1)%50 == 0:
+            print(f"Running Random Forest Classifier for Number of Trees {i}:{i+49}...")
+            
         rf = RandomForestClassifier(n_estimators = i,random_state=24)
         rf.fit(xtrain, ytrain)
         rf_misc.append(1 - rf.score(xtest, ytest))
@@ -529,12 +559,39 @@ def classifier_RF(xtrain, xtest, ytrain, ytest):
 
     dtc_misc = 1 - dtc.score(xtest, ytest)
 
-
-    plt.plot(range(1, 200), rf_misc,  label="Random Forest Misclassification Rate")
-    plt.hlines(y=dtc_misc, xmin=0, xmax=200,colors='r', lw=2, label='CART Misclassification Rate')
-    plt.legend(loc="upper right", borderaxespad=0)
+    # Plot error rate vs. # of trees for Random Forest
+    plt.plot(range(1, 200), 
+             rf_misc, # error rate is 1 - accuracy rate
+             color = 'slateblue',
+             alpha = .8)
+    
+    # Plot of our consistent Decision Tree error
+    # across the "number of trees" from earlier
+    plt.hlines(y = dtc_misc, 
+               xmin = 0, 
+               xmax = 200,
+               alpha = .8,
+               colors = 'Gray', 
+               lw = 2, 
+               label = 'CART Misclassification Rate')
+    
+    # Big dot on the max value
+    plt.scatter(min_index,
+                min_value, 
+                c = 'slateblue',
+                s = 50)
+    
+    # Plot text for max accuracy point(s) 
+    # a bit to the top-right of the point
+    plt.text(min_index + 3, 
+                min_value + min_value/15,
+            s = f"Min Error: {round(min_value, 4)}\nRF Trees: {min_index}",
+            fontsize = 8)
+    
+    plt.title('Error Rate of Random Forest Classifier\nw/ Varying Number of Trees')
     plt.xlabel('Number of Trees')
-    plt.ylabel('Error')
+    plt.ylabel('Test Error Rate')
+    plt.legend(['Random Forest', 'Decision Tree'])
 
     try:
         plt.savefig('Images/RF_vs_DT.png')
@@ -568,12 +625,115 @@ def classifier_RF(xtrain, xtest, ytrain, ytest):
 
     plt.show()
 
+    print(f'*************** Random Forest ({min_index} trees) Summary ***************')
+    print('Classes: ', rf_best.classes_)
+    print('Number of Classes: ', rf_best.n_classes_)
+    print('# of estimators: ', rf_best.n_estimators)
+    print('# of features: ', rf_best.n_features_)
     c = calc_scores(cf, "Random Forest")
+    print('--------------------------------------------------------')
 
+
+    # Get feature importance using the mean decrease in impurity:
+    # Feature importances are provided by the fitted attribute feature_importances_
+    # and they are computed as the mean and standard deviation of accumulation 
+    # of the impurity decrease within each tree.
+    # std = np.std([tree.feature_importances_ for tree in rf_best.estimators_], axis=0)
+    forest_importances = pd.DataFrame(zip(cols.tolist(), rf_best.feature_importances_.tolist()), 
+                                      columns = ['feature', 'importance'])
+    
+    forest_importances_top10 = forest_importances.sort_values('importance', ascending = False).head(10)
+    
+    plt.figure(figsize = (8,8))
+
+    plt.bar(forest_importances_top10['feature'],
+             # Convert the accuracy values from a string to a float and remove
+             # the '%' symbol at the end of it and sort the results in descending
+             # order
+             sorted(forest_importances_top10['importance'], reverse = True),
+             color = 'Slateblue')
+    
+    # Set the y-axis
+    plt.ylim([min(forest_importances_top10['importance']) - .05, 
+              max(forest_importances_top10['importance']) + .05])
+    # Tilt the x-labels
+    plt.xticks(rotation = 45)
+    plt.xlabel('Feature', fontsize = 14)
+    plt.ylabel('Importance (Mean Accuracy Decrease)', fontsize = 14)
+    plt.title('Feature Importance Using Permutation on Random Forest', fontsize = 18)
+    
+    plt.savefig('Images/Random_Forest_Feature_Importance.png', bbox_inches='tight')
+    plt.show() 
+    
     return c
 
 
-print("Prepping data...")
+# Adaboost
+def classifier_adaboost(xtrain, xtest, ytrain, ytest):
+    print(f"Running Adaboost...")
+    adaboost_model = AdaBoostClassifier()
+    
+    # Run 10-fold cross-validation to see the average accuracy score
+    cv = RepeatedStratifiedKFold(n_splits = 10,
+                                 n_repeats = 3)
+    n_scores = cross_val_score(adaboost_model, xtrain, ytrain,
+                               scoring = 'precision',
+                               cv = cv,
+                               n_jobs = -1,
+                               error_score = 'raise')
+    
+    print("Average Adaboost accuracy using 10-fold cross validation:", np.mean(n_scores))
+    
+    
+    # define the grid of values to search
+    print("Searching for optimal Adaboost parameters...")
+    grid = dict()
+    grid['n_estimators'] = [10, 50, 100, 500]
+    grid['learning_rate'] = [0.0001, 0.001, 0.01, 0.1, 1.0]
+    # define the grid search procedure
+    grid_search = GridSearchCV(estimator = adaboost_model, 
+                               param_grid = grid, 
+                               n_jobs = -1, 
+                               cv = cv, 
+                               scoring = 'precision')
+    # execute the grid search
+    grid_result = grid_search.fit(xtrain, ytrain)
+    
+    # summarize the best score and configuration
+    print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
+
+    optimal_adb = AdaBoostClassifier(learning_rate = .1,
+                                     n_estimators = 500)
+    ypred = optimal_adb.fit(xtrain, ytrain).predict(xtest)
+
+    cf = metrics.confusion_matrix(ytest.flatten(), ypred)
+    ax = plt.subplot()
+    sns.heatmap(cf, 
+                annot=True, 
+                fmt='g', 
+                cmap = 'Purples',
+                cbar = False,                
+                ax=ax);
+
+    ax.set_xlabel('Predicted labels');
+    ax.set_ylabel('True labels');
+    ax.set_title('Confusion Matrix - Adaboost');
+    ax.xaxis.set_ticklabels(['Not Returned', 'Returned']);
+    ax.yaxis.set_ticklabels(['Not Returned', 'Returned'])
+
+    try:
+        plt.savefig('Images/CM_adaboost.png')
+
+    except:
+        plt.savefig('../Images/CM_adaboost.png')
+
+    plt.show()
+
+    c = calc_scores(cf, "Adaboost")
+
+    return c 
+
+
 xtrain, xtest, ytrain, ytest = data_prep(dogs_selected)
 
 # Run all of our classifiers
@@ -585,6 +745,7 @@ clf_results = pd.concat([classifier_KSVM(xtrain, xtest, ytrain, ytest), clf_resu
 clf_results = pd.concat([classifier_NNet(xtrain, xtest, ytrain, ytest), clf_results])
 clf_results = pd.concat([classifier_tree(xtrain, xtest, ytrain, ytest, cols), clf_results])
 clf_results = pd.concat([classifier_RF(xtrain, xtest, ytrain, ytest), clf_results])
+clf_results = pd.concat([classifier_adaboost(xtrain, xtest, ytrain, ytest), clf_results])
 
 
 # try:
@@ -595,25 +756,61 @@ clf_results = pd.concat([classifier_RF(xtrain, xtest, ytrain, ytest), clf_result
 
 #%% Plot the results of our classifiers
 
-# Start by reordering our d
-plt.figure(figsize = (8,8))
+def plot_classifier_accuracy(df, name = 'Classifiers_Final_Accuracy'):
+    plt.figure(figsize = (8,8))
 
-plt.bar(clf_results['Classifier'],
-         # Convert the accuracy values from a string to a float and remove
-         # the '%' symbol at the end of it and sort the results in descending
-         # order
-         sorted(clf_results['Accuracy'].apply(lambda x: float(re.sub('%', '', x))),
-                reverse = True),
-         color = 'Slateblue')
+    plt.bar(clf_results['Classifier'],
+             # Convert the accuracy values from a string to a float and remove
+             # the '%' symbol at the end of it and sort the results in descending
+             # order
+             sorted(clf_results['Accuracy'].apply(lambda x: float(re.sub('%', '', x))),
+                    reverse = True),
+             color = 'Slateblue')
+    
+    # Set the y-axis
+    plt.ylim([min(clf_results['Accuracy'].apply(lambda x: float(re.sub('%', '', x)))) - 5, 
+              max(clf_results['Accuracy'].apply(lambda x: float(re.sub('%', '', x)))) + 5])
+    # Tilt the x-labels
+    plt.xticks(rotation = 45)
+    plt.xlabel('Classifier', fontsize = 14)
+    plt.ylabel('Accuracy (%)', fontsize = 14)
+    plt.title('Accuracy Results of Various Classifiers', fontsize = 18)
+    
+    plt.savefig('Images/' + name + '.png', bbox_inches='tight')
+    plt.show() 
 
-# Set the y-axis
-plt.ylim([min(clf_results['Accuracy'].apply(lambda x: float(re.sub('%', '', x)))) - 5, 
-          max(clf_results['Accuracy'].apply(lambda x: float(re.sub('%', '', x)))) + 5])
-# Tilt the x-labels
-plt.xticks(rotation = 45)
-plt.xlabel('Classifier', fontsize = 14)
-plt.ylabel('Accuracy (%)', fontsize = 14)
-plt.title('Accuracy Results of Various Classifiers', fontsize = 18)
+plot_classifier_accuracy(clf_results)
 
-plt.savefig('Images/Classifiers_Final_Accuracy.png', bbox_inches='tight')
-plt.show() 
+#%%
+# Now let's try to run the same but with only the columns we are more confident
+# in from our requirements gathering sessions.
+dogs_reduced = dogs_selected.drop(columns = ['MIX_BOOL',
+                                         'multi_color',
+                                         # 'num_colors',
+                                         # 'contains_black',
+                                         # 'contains_white',
+                                         # 'contains_yellow',
+                                         'new_this_week',
+                                         'diarrhea',
+                                         'uri',
+                                         'tapeworm',
+                                         'general_infection',
+                                         'dog_park',
+                                         'treated_vaccinated',
+                                         'FT_FIXED',
+                                         'spay_neuter'])
+
+xtrain, xtest, ytrain, ytest = data_prep(dogs_reduced)
+
+# Run all of our classifiers 
+clf_reduced_results = classifier_NB(xtrain, xtest, ytrain, ytest)
+clf_reduced_results = pd.concat([classifier_KNN(xtrain, xtest, ytrain, ytest), clf_reduced_results])
+clf_reduced_results = pd.concat([classifier_LR(xtrain, xtest, ytrain, ytest), clf_reduced_results])
+clf_reduced_results = pd.concat([classifier_SVM(xtrain, xtest, ytrain, ytest), clf_reduced_results])
+clf_reduced_results = pd.concat([classifier_KSVM(xtrain, xtest, ytrain, ytest), clf_reduced_results])
+clf_reduced_results = pd.concat([classifier_NNet(xtrain, xtest, ytrain, ytest), clf_reduced_results])
+clf_reduced_results = pd.concat([classifier_tree(xtrain, xtest, ytrain, ytest, dogs_reduced.columns), clf_reduced_results])
+clf_reduced_results = pd.concat([classifier_RF(xtrain, xtest, ytrain, ytest), clf_reduced_results])
+clf_reduced_results = pd.concat([classifier_adaboost(xtrain, xtest, ytrain, ytest), clf_reduced_results])
+
+plot_classifier_accuracy(clf_reduced_results, name = 'Classifiers_Final_Accuracy_Reduced_Variables')
