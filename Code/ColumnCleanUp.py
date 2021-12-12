@@ -38,6 +38,9 @@ def clean_color(df):
                                 `COLOR_FIXED` column.
         - `contains_yellow` | Variable indicating whether 'tan/yellow/golden'
                                 appear in the `COLOR_FIXED` column.
+        - `contains_dark` | A general variable indicating whether the dog has
+                            a darker coat, since the colors can sometimes be
+                            guesses.
     '''
     cleaned_df = df.copy(deep = True)
 
@@ -148,7 +151,9 @@ def clean_color(df):
         cleaned_df['COLOR_FIXED'].str.contains('yellow')) | (cleaned_df['COLOR_FIXED'].str.contains('golden'))
     cleaned_df.loc[(yellow_bool) & ~(cleaned_df['COLOR_FIXED'].isna()), 'contains_yellow'] = 1
     cleaned_df.loc[~(yellow_bool) & ~(cleaned_df['COLOR_FIXED'].isna()), 'contains_yellow'] = 0
-
+    cleaned_df.loc[cleaned_df['contains_black'] == 1 | \
+                   cleaned_df['COLOR_FIXED'].str.contains('brown', na = False), 'contains_dark'] = 1
+    cleaned_df.loc[cleaned_df['contains_dark'] != 1, 'contains_dark'] = 0 
     return cleaned_df
 
 
@@ -432,11 +437,25 @@ def clean_breed_mixes(df):
                    'is_shepherd'] = 1
     cleaned_df.loc[~(cleaned_df['BREED_MIXES_FIXED'].str.contains('Shep', na = False)), 
                    'is_shepherd'] = 0
+    
+    cleaned_df.loc[(cleaned_df['BREED_MIXES_FIXED'].str.contains('Terrier', na = False)), 
+                   'is_terrier'] = 1
+    cleaned_df.loc[~(cleaned_df['BREED_MIXES_FIXED'].str.contains('Terrier', na = False)), 
+                   'is_terrier'] = 0
+    cleaned_df.loc[(cleaned_df['BREED_MIXES_FIXED'].str.contains('Husky', na = False)), 
+                   'is_husky'] = 1
+    cleaned_df.loc[~(cleaned_df['BREED_MIXES_FIXED'].str.contains('Husky', na = False)), 
+                   'is_husky'] = 0
+    
     # Build the `is_other_breed` column based on the previous two booleans
     cleaned_df.loc[(cleaned_df['is_retriever'] == 0) & \
-                   (cleaned_df['is_shepherd'] == 0), 'is_other_breed'] = 1
+                   (cleaned_df['is_shepherd'] == 0) & \
+                    (cleaned_df['is_terrier'] == 0) & \
+                    (cleaned_df['is_husky'] == 0), 'is_other_breed'] = 1
     cleaned_df.loc[(cleaned_df['is_retriever'] == 1) | \
                    (cleaned_df['is_shepherd'] == 1) | \
+                   (cleaned_df['is_terrier'] == 1) | \
+                   (cleaned_df['is_husky'] == 1) | \
                    (cleaned_df['BREED_MIXES_FIXED'].isna()), 'is_other_breed'] = 0
 
     
