@@ -26,7 +26,7 @@ from sklearn.svm import OneClassSVM
 import dataframe_image as dfi
 import prince
 from sklearn.decomposition import PCA # Used for principal component analysis
-
+import re
 
 
 try:
@@ -202,15 +202,54 @@ def classifier_NB(xtrain, xtest, ytrain, ytest):
 #KNN (might need to reduce sample size)
 def classifier_KNN(xtrain, xtest, ytrain, ytest):
     print(f"Running KNN...")
-    kn = KNeighborsClassifier(n_neighbors=10)
+    
+    # Run through up to 15 neighbors for KNN (Only odd values)
+    accuracy_vals_knn = []
+    k_vals = [k for k in range(1, 16) if k%2 - 1 == 0]
+    for k in k_vals:
+        print("k =", k)
+        kn = KNeighborsClassifier(n_neighbors = k)
+        kn = kn.fit(xtrain, ytrain.flatten())
+        ypred = kn.predict(xtest)
+        cf = metrics.confusion_matrix(ytest.flatten(), ypred)
+        c = calc_scores(cf, "KNN")
+        # Append the accuracy to our list, but remove the '%' symbol
+        accuracy_vals_knn.append(float(re.sub('%', '', c['Accuracy'].values[0])))
+        
+    # Let's plot our accuracy points
+    plt.figure(figsize = (8,8))
+    
+    plt.plot(k_vals,
+             accuracy_vals_knn,
+             c = 'Slateblue')
+    
+    plt.scatter(k_vals,
+         accuracy_vals_knn,
+         c = 'Slateblue')
+    
+    # Set the y-axis
+    plt.ylim([min(accuracy_vals_knn) - 5, max(accuracy_vals_knn) + 5])
+    plt.xlabel('# of Neighbors', fontsize = 14)
+    plt.ylabel('Accuracy', fontsize = 14)
+    plt.title('KNN: Accuracy of Different K Values', fontsize = 18)
+    
+    plt.savefig('Images/KNN_K_Values_Accuracy.png', bbox_inches='tight')
+    plt.show()     
+    
+    # Now run knn with our best k value
+    print(f"Best k-value for KNN @ k = {k_vals[np.where(min(accuracy_vals_knn))[0][0]]}")
+    kn = KNeighborsClassifier(n_neighbors = k_vals[np.where(min(accuracy_vals_knn))[0][0]])
     kn = kn.fit(xtrain, ytrain.flatten())
     ypred = kn.predict(xtest)
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
+    c = calc_scores(cf, "KNN")
+
     ax= plt.subplot()
     sns.heatmap(cf, 
                 annot=True, 
                 fmt='g', 
                 cmap = 'Purples',
+                cbar = False,                
                 ax=ax);
     ax.set_xlabel('Predicted labels');
     ax.set_ylabel('True labels');
@@ -226,7 +265,6 @@ def classifier_KNN(xtrain, xtest, ytrain, ytest):
 
     plt.show()
 
-    c = calc_scores(cf, "KNN")
     
     return c
 
@@ -242,8 +280,8 @@ def classifier_LR(xtrain, xtest, ytrain, ytest):
                 annot=True, 
                 fmt='g', 
                 cmap = 'Purples',
+                cbar = False,                
                 ax=ax);
-
     ax.set_xlabel('Predicted labels');
     ax.set_ylabel('True labels');
     ax.set_title('Confusion Matrix - Logistic Regression');
@@ -273,12 +311,11 @@ def classifier_SVM(xtrain, xtest, ytrain, ytest):
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
     ax= plt.subplot()
     sns.heatmap(cf, 
-            annot=True, 
-            fmt='g', 
-            cmap = 'Purples',
-            ax=ax);
-
-
+                annot=True, 
+                fmt='g', 
+                cmap = 'Purples',
+                cbar = False,                
+                ax=ax);
     ax.set_xlabel('Predicted labels');
     ax.set_ylabel('True labels');
     ax.set_title('Confusion Matrix - SVM');
@@ -310,8 +347,8 @@ def classifier_KSVM(xtrain, xtest, ytrain, ytest):
                 annot=True, 
                 fmt='g', 
                 cmap = 'Purples',
+                cbar = False,                
                 ax=ax);
-
 
     ax.set_xlabel('Predicted labels');
     ax.set_ylabel('True labels');
@@ -345,9 +382,8 @@ def classifier_NNet(xtrain, xtest, ytrain, ytest):
                 annot=True, 
                 fmt='g', 
                 cmap = 'Purples',
+                cbar = False,                
                 ax=ax);
-
-
     ax.set_xlabel('Predicted labels');
     ax.set_ylabel('True labels');
     ax.set_title('Confusion Matrix - Neural Networks');
@@ -390,8 +426,8 @@ def classifier_tree(xtrain, xtest, ytrain, ytest, cols):
                 annot=True, 
                 fmt='g', 
                 cmap = 'Purples',
+                cbar = False,                
                 ax=ax);
-
 
     ax.set_xlabel('Predicted labels');
     ax.set_ylabel('True labels');
@@ -452,6 +488,7 @@ def classifier_RF(xtrain, xtest, ytrain, ytest):
                 annot=True, 
                 fmt='g', 
                 cmap = 'Purples',
+                cbar = False,                
                 ax=ax);
 
     title = 'Confusion Matrix - Random Forest with ' + str(min_index) + ' Trees'
