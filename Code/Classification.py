@@ -271,7 +271,7 @@ def classifier_KNN(xtrain, xtest, ytrain, ytest):
 #Logistic Regression
 def classifier_LR(xtrain, xtest, ytrain, ytest):
     print(f"Running Logistic Regression...")
-    lr = LogisticRegression(random_state=0, max_iter=130).fit(xtrain, ytrain.flatten())
+    lr = LogisticRegression(random_state = 0, max_iter = 130).fit(xtrain, ytrain.flatten())
     ypred = lr.predict(xtest)
 
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
@@ -530,3 +530,27 @@ clf_results = pd.concat([classifier_RF(xtrain, xtest, ytrain, ytest), clf_result
 
 # except:
 #     dfi.export(a, '../Images/ScoresResults.png')
+
+#%% Plot the results of our classifiers
+
+# Start by reordering our d
+plt.figure(figsize = (8,8))
+
+plt.bar(clf_results['Classifier'],
+         # Convert the accuracy values from a string to a float and remove
+         # the '%' symbol at the end of it
+         sorted(clf_results['Accuracy'].apply(lambda x: float(re.sub('%', '', x))),
+                reverse = True),
+         color = 'Slateblue')
+
+# Set the y-axis
+plt.ylim([min(clf_results['Accuracy'].apply(lambda x: float(re.sub('%', '', x)))) - 5, 
+          max(clf_results['Accuracy'].apply(lambda x: float(re.sub('%', '', x)))) + 5])
+# Tilt the x-labels
+plt.xticks(rotation = 45)
+plt.xlabel('Classifier', fontsize = 14)
+plt.ylabel('Accuracy (%)', fontsize = 14)
+plt.title('Accuracy Results of Various Classifiers', fontsize = 18)
+
+plt.savefig('Images/Classifiers_Final_Accuracy.png', bbox_inches='tight')
+plt.show() 
