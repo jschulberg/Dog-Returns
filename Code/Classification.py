@@ -221,11 +221,10 @@ def classifier_KNN(xtrain, xtest, ytrain, ytest):
     
     plt.plot(k_vals,
              accuracy_vals_knn,
+             linewidth = 4,
+             marker = 'o',
+             markersize = 10,
              c = 'Slateblue')
-    
-    plt.scatter(k_vals,
-         accuracy_vals_knn,
-         c = 'Slateblue')
     
     # Set the y-axis
     plt.ylim([min(accuracy_vals_knn) - 5, max(accuracy_vals_knn) + 5])
@@ -271,7 +270,62 @@ def classifier_KNN(xtrain, xtest, ytrain, ytest):
 #Logistic Regression
 def classifier_LR(xtrain, xtest, ytrain, ytest):
     print(f"Running Logistic Regression...")
-    lr = LogisticRegression(random_state = 0, max_iter = 130).fit(xtrain, ytrain.flatten())
+    
+    # Let's try out various C values for the 5 solvers we can use
+    solvers = ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
+    
+    # Before iterating through them, let's initialize an empty dataframe
+    log_reg_df = pd.DataFrame(columns = ['solver', 'C', 'accuracy'])
+    
+    for solver in solvers:
+        print("-"*50)
+        print("Solver:", solver)
+        print("-"*50)
+        
+        accuracy_vals_logreg = []
+        # c_vals = [c for c in range(1, 11) if c%2 == 0]
+        c_vals = [.001, .01, .05, .1, .25, .5, 1, 2, 5, 10, 100, 1000]
+
+        for c in c_vals:
+            print("C =", c)
+            lr = LogisticRegression(solver = solver,
+                                    C = c,
+                                    max_iter = 200).fit(xtrain, ytrain.flatten())
+            ypred = lr.predict(xtest)
+            cf = metrics.confusion_matrix(ytest.flatten(), ypred)
+            c = calc_scores(cf, "Logistic Regression")
+            # Append the accuracy to our list, but remove the '%' symbol
+            accuracy_vals_logreg.append(float(re.sub('%', '', c['Accuracy'].values[0])))
+            
+        # Convert these into a dataframe
+        temp_df = pd.DataFrame(zip(c_vals, accuracy_vals_logreg), columns = ['C', 'accuracy'])
+        temp_df['solver'] = solver
+        log_reg_df = pd.concat([log_reg_df, temp_df])
+            
+        # Let's plot our accuracy points for each solver
+        plt.figure(figsize = (8,8))
+        
+        plt.plot(np.log10(c_vals),
+                 accuracy_vals_logreg,
+                 linewidth = 4,
+                 marker = 'o',
+                 markersize = 10,
+                 c = 'Slateblue')
+        
+        # Set the y-axis
+        plt.ylim([min(accuracy_vals_logreg) - 5, max(accuracy_vals_logreg) + 5])
+        plt.xlabel('C (Inverse of Regularization Strength)', fontsize = 14)
+        plt.ylabel('Accuracy', fontsize = 14)
+        plt.title(f'Logistic Regression: Accuracy of Different C Values\nSolver: {solver}', fontsize = 18)
+        
+        plt.savefig(f'Images/Logistic_Regression_{solver}_C_Values_Accuracy.png', bbox_inches='tight')
+        plt.show()     
+    
+    
+    # Pull out the parameters from our best logistic regression classifier
+    lr = LogisticRegression(penalty = 'elasticnet',
+                            # solver = 'liblinear',
+                            max_iter = 200).fit(xtrain, ytrain.flatten())
     ypred = lr.predict(xtest)
 
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
@@ -538,7 +592,8 @@ plt.figure(figsize = (8,8))
 
 plt.bar(clf_results['Classifier'],
          # Convert the accuracy values from a string to a float and remove
-         # the '%' symbol at the end of it
+         # the '%' symbol at the end of it and sort the results in descending
+         # order
          sorted(clf_results['Accuracy'].apply(lambda x: float(re.sub('%', '', x))),
                 reverse = True),
          color = 'Slateblue')
