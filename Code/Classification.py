@@ -532,6 +532,36 @@ def classifier_tree(xtrain, xtest, ytrain, ytest, cols):
     print('# of features: ', dtc.n_features_)
     c = calc_scores(cf, "Decision Tree")
     print('--------------------------------------------------------\n\n')
+    
+    
+    # Get feature importance, which is dependent on the number of instances
+    # that a feature appears in the trees
+    tree_importances = pd.DataFrame(zip(cols.tolist(), dtc.feature_importances_.tolist()), 
+                                      columns = ['feature', 'importance'])
+    
+    tree_importances_top10 = tree_importances.sort_values('importance', ascending = False).head(10)
+    
+    plt.figure(figsize = (8,8))
+
+    plt.bar(tree_importances_top10['feature'],
+             # Convert the accuracy values from a string to a float and remove
+             # the '%' symbol at the end of it and sort the results in descending
+             # order
+             sorted(tree_importances_top10['importance'], reverse = True),
+             color = 'Slateblue')
+    
+    # Set the y-axis
+    plt.ylim([min(tree_importances_top10['importance']) - .05, 
+              max(tree_importances_top10['importance']) + .05])
+    # Tilt the x-labels
+    plt.xticks(rotation = 45)
+    plt.xlabel('Feature', fontsize = 14)
+    plt.ylabel('Importance (Based on Impurity)', fontsize = 14)
+    plt.title('Feature Importance on Decision Trees', fontsize = 18)
+    
+    plt.savefig('Images/Decision_Tree_Feature_Importance.png', bbox_inches='tight')
+    plt.show() 
+    
 
     return c
 
@@ -754,6 +784,7 @@ clf_results = pd.concat([classifier_adaboost(xtrain, xtest, ytrain, ytest), clf_
 #     dfi.export(a, '../Images/ScoresResults.png')
 
 #%% Plot the results of our classifiers
+np.random.seed(42)
 
 def plot_classifier_accuracy(df, name = 'Classifiers_Final_Accuracy'):
     plt.figure(figsize = (8,8))
