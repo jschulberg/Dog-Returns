@@ -702,8 +702,7 @@ def classifier_adaboost(xtrain, xtest, ytrain, ytest):
     # summarize the best score and configuration
     print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
 
-    optimal_adb = AdaBoostClassifier(learning_rate = .1,
-                                     n_estimators = 500)
+    optimal_adb = grid_search.best_estimator_
     ypred = optimal_adb.fit(xtrain, ytrain).predict(xtest)
 
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
@@ -798,6 +797,12 @@ dogs_reduced = dogs_selected.drop(columns = ['MIX_BOOL',
                                          'dog_park',
                                          'treated_vaccinated',
                                          'FT_FIXED',
+                                         'car_sick',
+                                         'hair_loss',
+                                         'tapeworm',
+                                         'ear_infection',
+                                         'anaplasmosis',
+                                         'ehrlichia',
                                          'spay_neuter'])
 
 xtrain, xtest, ytrain, ytest = data_prep(dogs_reduced)
@@ -814,3 +819,53 @@ clf_reduced_results = pd.concat([classifier_RF(xtrain, xtest, ytrain, ytest), cl
 clf_reduced_results = pd.concat([classifier_adaboost(xtrain, xtest, ytrain, ytest), clf_reduced_results])
 
 plot_classifier_accuracy(clf_reduced_results, name = 'Classifiers_Final_Accuracy_Reduced_Variables')
+
+
+#%% A Walkthrough example
+# In this section we'll take two dogs, one returned and one not returned
+# and see what the Random Forest model predicts for each
+print("Prepping data...")
+print("Imputing missing values...")
+data = na_imputation(dogs_reduced)
+y = data.iloc[:,-1]
+X = data.iloc[:,0:-1]
+
+# scale data
+print("Scaling data...")
+xdata = scale_arr(X)
+
+# Bring these back together in dataframe form and merge the link back in
+# dogs_fixed = pd.concat([pd.DataFrame(xdata, index = y.index, columns = cols), y], axis = 1) \
+dogs_fixed = data \
+                .merge(dogs_joined[['ID', 'DOG NAME', 'LINK']],
+                       on = 'ID',
+                       how = 'left')
+
+# Get random dogs
+ex_returned_dog = dogs_fixed[dogs_fixed['returned'] == 1].sample(1)
+ex_notreturned_dog = dogs_fixed[dogs_fixed['returned'] == 0].sample(1)
+
+# Get specific dogs in report
+ex_returned_dog = dogs_fixed[dogs_fixed['ID'] == 'PICK-MD-14-0037']
+ex_notreturned_dog = dogs_fixed[dogs_fixed['ID'] == 'MTHY-MD-15-0081']
+ex_dogs = pd.concat([ex_returned_dog, ex_notreturned_dog], sort = False)
+
+# See what Random Forest predicts for these two
+# min_value = min(rf_misc)
+# min_index = rf_misc.index(min_value)
+# rf_best = RandomForestClassifier(n_estimators=min_index, random_state=24)
+# rf_best.fit(xtrain, ytrain)
+ex_pred = rf_best.predict(ex_dogs.drop(columns = ['ID', 'LINK', 'DOG NAME', 'returned']).to_numpy())
+
+# Bring the predictions back in
+ex_dogs = pd.merge(ex_dogs, pd.DataFrame(ex_pred, 
+                                           columns = ['predicted_return'],
+                                           index = ex_dogs.ID),
+                   on = 'ID',
+                   how = 'inner')
+
+if ex_dogs.LINK.isna().sum() == 0 and all(ex_dogs.returned == ex_dogs.predicted_return):
+    print("We good")
+    ex_full = dogs_joined[dogs_joined['ID'].isin(ex_dogs['ID'])]
+else:
+    print("Keep running the code...")
