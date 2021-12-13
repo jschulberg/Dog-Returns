@@ -344,8 +344,12 @@ def classifier_LR(xtrain, xtest, ytrain, ytest):
     
     
     # Pull out the parameters from our best logistic regression classifier
-    lr = LogisticRegression(max_iter = 200).fit(xtrain, ytrain.flatten())
-    ypred = lr.predict(xtest)
+    log_reg_best = log_reg_df.loc[log_reg_df['accuracy'] == max(log_reg_df['accuracy']), :].sample(1)
+    print("Best logistic regression parameters:\n", log_reg_best)
+    lr_best = LogisticRegression(solver = log_reg_best.iloc[0, 0],
+                                 C = log_reg_best.iloc[0, 1],
+                                 max_iter = 200).fit(xtrain, ytrain.flatten())
+    ypred = lr_best.predict(xtest)
 
     cf = metrics.confusion_matrix(ytest.flatten(), ypred)
     ax= plt.subplot()
@@ -370,6 +374,9 @@ def classifier_LR(xtrain, xtest, ytrain, ytest):
     plt.show()
 
     c = calc_scores(cf, "Logistic Regression")
+    
+    
+    # Let's take a look at the most important features
 
     return c
 
