@@ -401,10 +401,7 @@ def classifier_LR(xtrain, xtest, ytrain, ytest, cols):
     plt.figure(figsize = (8,8))
 
     plt.bar(log_reg_importances_top10['feature'],
-             # Convert the accuracy values from a string to a float and remove
-             # the '%' symbol at the end of it and sort the results in descending
-             # order
-             sorted(log_reg_importances_top10['importance'], reverse = True),
+             log_reg_importances_top10['importance'],
              color = 'Slateblue')
     
     # Set the y-axis
@@ -595,7 +592,7 @@ def classifier_tree(xtrain, xtest, ytrain, ytest, cols):
              # Convert the accuracy values from a string to a float and remove
              # the '%' symbol at the end of it and sort the results in descending
              # order
-             sorted(tree_importances_top10['importance'], reverse = True),
+             tree_importances_top10['importance'],
              color = 'Slateblue')
     
     # Set the y-axis
@@ -728,7 +725,7 @@ def classifier_RF(xtrain, xtest, ytrain, ytest):
              # Convert the accuracy values from a string to a float and remove
              # the '%' symbol at the end of it and sort the results in descending
              # order
-             sorted(forest_importances_top10['importance'], reverse = True),
+             forest_importances_top10['importance'],
              color = 'Slateblue')
     
     # Set the y-axis
@@ -813,6 +810,7 @@ def classifier_adaboost(xtrain, xtest, ytrain, ytest):
 
 np.random.seed(42)
 
+#%%
 xtrain, xtest, ytrain, ytest = data_prep(dogs_selected)
 
 # Run all of our classifiers
@@ -837,19 +835,20 @@ except:
 #%% Plot the results of our classifiers
 
 def plot_classifier_accuracy(df, name = 'Classifiers_Final_Accuracy'):
+
+    # Fix the accuracy column for plotting purposes
+    if '%' in df['Accuracy']:
+        df['Accuracy'] = df['Accuracy'].apply(lambda x: float(re.sub('%', '', x)))
+                         
     plt.figure(figsize = (8,8))
 
-    plt.bar(clf_results['Classifier'],
-             # Convert the accuracy values from a string to a float and remove
-             # the '%' symbol at the end of it and sort the results in descending
-             # order
-             sorted(clf_results['Accuracy'].apply(lambda x: float(re.sub('%', '', x))),
-                    reverse = True),
+    plt.bar(df.sort_values('Accuracy', ascending = False)['Classifier'],
+             df.sort_values('Accuracy', ascending = False)['Accuracy'],
              color = 'Slateblue')
     
     # Set the y-axis
-    plt.ylim([min(clf_results['Accuracy'].apply(lambda x: float(re.sub('%', '', x)))) - 5, 
-              max(clf_results['Accuracy'].apply(lambda x: float(re.sub('%', '', x)))) + 5])
+    plt.ylim([min(df['Accuracy']) - 5, 
+              max(df['Accuracy']) + 5])
     # Tilt the x-labels
     plt.xticks(rotation = 45)
     plt.xlabel('Classifier', fontsize = 14)
