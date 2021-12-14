@@ -381,7 +381,7 @@ def classifier_LR(xtrain, xtest, ytrain, ytest, cols):
     #   z = w0 + w1x1 + ... + wnxn
     #   where y = 1/(1 + e^(-z))
     w0 = lr_best.intercept_[0]
-    for i, col in enumerate(cols.drop(['ID', 'returned'])):
+    for i, col in enumerate(cols):
         if i == 0:
             print("y =", round(w0, 4), "+")
         elif i == lr_best.coef_[0].size-1:
@@ -390,8 +390,9 @@ def classifier_LR(xtrain, xtest, ytrain, ytest, cols):
             print(round(lr_best.coef_[0][i], 4) , "*", col, "+")
 
     # Put our column names and the coefficients exponentiated into a dataframe
-    log_reg_importances = pd.DataFrame(zip(cols.drop(['ID', 'returned']), 
-                                           pow(math.e, lr_best.coef_[0])), 
+    log_reg_importances = pd.DataFrame(zip(cols, 
+                                           # abs(lr_best.coef_[0])), 
+                                            pow(math.e, lr_best.coef_[0])), 
                                        columns = ["feature", "importance"])
     # Sort by importance
     log_reg_importances = log_reg_importances.sort_values(by = ["importance"], ascending = False)
@@ -810,6 +811,8 @@ def classifier_adaboost(xtrain, xtest, ytrain, ytest):
     return c 
 
 
+np.random.seed(42)
+
 xtrain, xtest, ytrain, ytest = data_prep(dogs_selected)
 
 # Run all of our classifiers
@@ -824,14 +827,14 @@ clf_results = pd.concat([classifier_RF(xtrain, xtest, ytrain, ytest), clf_result
 clf_results = pd.concat([classifier_adaboost(xtrain, xtest, ytrain, ytest), clf_results])
 
 
-# try:
-#     dfi.export(a, 'Images/ScoresResults.png')
+try:
+    dfi.export(clf_results.sort_values('Accuracy', ascending = False), 'Images/ScoresResults.png')
 
-# except:
-#     dfi.export(a, '../Images/ScoresResults.png')
+except:
+    dfi.export(clf_results.sort_values('Accuracy', ascending = False), '../Images/ScoresResults.png')
+
 
 #%% Plot the results of our classifiers
-np.random.seed(42)
 
 def plot_classifier_accuracy(df, name = 'Classifiers_Final_Accuracy'):
     plt.figure(figsize = (8,8))
@@ -888,15 +891,21 @@ xtrain, xtest, ytrain, ytest = data_prep(dogs_reduced)
 # Run all of our classifiers 
 clf_reduced_results = classifier_NB(xtrain, xtest, ytrain, ytest)
 clf_reduced_results = pd.concat([classifier_KNN(xtrain, xtest, ytrain, ytest), clf_reduced_results])
-clf_reduced_results = pd.concat([classifier_LR(xtrain, xtest, ytrain, ytest, dogs_reduced.columns), clf_reduced_results])
+clf_reduced_results = pd.concat([classifier_LR(xtrain, xtest, ytrain, ytest, dogs_reduced.columns.drop(['ID', 'returned'])), clf_reduced_results])
 clf_reduced_results = pd.concat([classifier_SVM(xtrain, xtest, ytrain, ytest), clf_reduced_results])
 clf_reduced_results = pd.concat([classifier_KSVM(xtrain, xtest, ytrain, ytest), clf_reduced_results])
 clf_reduced_results = pd.concat([classifier_NNet(xtrain, xtest, ytrain, ytest), clf_reduced_results])
-clf_reduced_results = pd.concat([classifier_tree(xtrain, xtest, ytrain, ytest, dogs_reduced.columns), clf_reduced_results])
+clf_reduced_results = pd.concat([classifier_tree(xtrain, xtest, ytrain, ytest, dogs_reduced.columns.drop(['ID', 'returned'])), clf_reduced_results])
 clf_reduced_results = pd.concat([classifier_RF(xtrain, xtest, ytrain, ytest), clf_reduced_results])
 clf_reduced_results = pd.concat([classifier_adaboost(xtrain, xtest, ytrain, ytest), clf_reduced_results])
 
 plot_classifier_accuracy(clf_reduced_results, name = 'Classifiers_Final_Accuracy_Reduced_Variables')
+
+try:
+    dfi.export(clf_reduced_results.sort_values('Accuracy', ascending = False), 'Images/ScoresResults.png')
+
+except:
+    dfi.export(clf_reduced_results.sort_values('Accuracy', ascending = False), '../Images/ScoresResults.png')
 
 
 #%% A Walkthrough example
