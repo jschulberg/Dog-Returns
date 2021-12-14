@@ -27,7 +27,7 @@ import dataframe_image as dfi
 import prince
 from sklearn.decomposition import PCA # Used for principal component analysis
 import re
-
+import math
 
 try:
     adopts = pd.read_csv("../Data/Cleaned_Adoption_List.csv")
@@ -289,7 +289,7 @@ def classifier_KNN(xtrain, xtest, ytrain, ytest):
     return c
 
 #Logistic Regression
-def classifier_LR(xtrain, xtest, ytrain, ytest):
+def classifier_LR(xtrain, xtest, ytrain, ytest, cols):
     print(f"Running Logistic Regression...")
     
     # Let's try out various C values for the 5 solvers we can use
@@ -376,7 +376,47 @@ def classifier_LR(xtrain, xtest, ytrain, ytest):
     c = calc_scores(cf, "Logistic Regression")
     
     
-    # Let's take a look at the most important features
+    # Let's take a look at the most important features by looking at the Logistic
+    # Regression equation for n features:
+    #   z = w0 + w1x1 + ... + wnxn
+    #   where y = 1/(1 + e^(-z))
+    w0 = lr_best.intercept_[0]
+    for i, col in enumerate(cols.drop(['ID', 'returned'])):
+        if i == 0:
+            print("y =", round(w0, 4), "+")
+        elif i == lr_best.coef_[0].size-1:
+            print(round(lr_best.coef_[0][i], 4), "*", col)
+        else:
+            print(round(lr_best.coef_[0][i], 4) , "*", col, "+")
+
+    # Put our column names and the coefficients exponentiated into a dataframe
+    log_reg_importances = pd.DataFrame(zip(cols.drop(['ID', 'returned']), 
+                                           pow(math.e, lr_best.coef_[0])), 
+                                       columns = ["feature", "importance"])
+    # Sort by importance
+    log_reg_importances = log_reg_importances.sort_values(by = ["importance"], ascending = False)
+    log_reg_importances_top10 = log_reg_importances.head(10)
+    # Plot results
+    plt.figure(figsize = (8,8))
+
+    plt.bar(log_reg_importances_top10['feature'],
+             # Convert the accuracy values from a string to a float and remove
+             # the '%' symbol at the end of it and sort the results in descending
+             # order
+             sorted(log_reg_importances_top10['importance'], reverse = True),
+             color = 'Slateblue')
+    
+    # Set the y-axis
+    plt.ylim([min(log_reg_importances_top10['importance']) - .05, 
+              log_reg_importances_top10.iloc[1, 1] + 10])
+    # Tilt the x-labels
+    plt.xticks(rotation = 45)
+    plt.xlabel('Feature', fontsize = 14)
+    plt.ylabel('Importance (Based on Coefficient)', fontsize = 14)
+    plt.title('Feature Importance for Logistic Regression', fontsize = 18)
+    
+    plt.savefig('Images/.png', bbox_inches='tight')
+    plt.show() 
 
     return c
 
@@ -775,7 +815,7 @@ xtrain, xtest, ytrain, ytest = data_prep(dogs_selected)
 # Run all of our classifiers
 clf_results = classifier_NB(xtrain, xtest, ytrain, ytest)
 clf_results = pd.concat([classifier_KNN(xtrain, xtest, ytrain, ytest), clf_results])
-clf_results = pd.concat([classifier_LR(xtrain, xtest, ytrain, ytest), clf_results])
+clf_results = pd.concat([classifier_LR(xtrain, xtest, ytrain, ytest, cols), clf_results])
 clf_results = pd.concat([classifier_SVM(xtrain, xtest, ytrain, ytest), clf_results])
 clf_results = pd.concat([classifier_KSVM(xtrain, xtest, ytrain, ytest), clf_results])
 clf_results = pd.concat([classifier_NNet(xtrain, xtest, ytrain, ytest), clf_results])
@@ -848,7 +888,7 @@ xtrain, xtest, ytrain, ytest = data_prep(dogs_reduced)
 # Run all of our classifiers 
 clf_reduced_results = classifier_NB(xtrain, xtest, ytrain, ytest)
 clf_reduced_results = pd.concat([classifier_KNN(xtrain, xtest, ytrain, ytest), clf_reduced_results])
-clf_reduced_results = pd.concat([classifier_LR(xtrain, xtest, ytrain, ytest), clf_reduced_results])
+clf_reduced_results = pd.concat([classifier_LR(xtrain, xtest, ytrain, ytest, dogs_reduced.columns), clf_reduced_results])
 clf_reduced_results = pd.concat([classifier_SVM(xtrain, xtest, ytrain, ytest), clf_reduced_results])
 clf_reduced_results = pd.concat([classifier_KSVM(xtrain, xtest, ytrain, ytest), clf_reduced_results])
 clf_reduced_results = pd.concat([classifier_NNet(xtrain, xtest, ytrain, ytest), clf_reduced_results])
