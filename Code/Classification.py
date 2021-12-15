@@ -413,7 +413,7 @@ def classifier_LR(xtrain, xtest, ytrain, ytest, cols):
     plt.ylabel('Importance (Based on Coefficient)', fontsize = 14)
     plt.title('Feature Importance for Logistic Regression', fontsize = 18)
     
-    plt.savefig('Images/.png', bbox_inches='tight')
+    plt.savefig('Images/Feature_Importance_Logistic_Regression.png', bbox_inches='tight')
     plt.show() 
 
     return c
@@ -837,7 +837,7 @@ except:
 def plot_classifier_accuracy(df, name = 'Classifiers_Final_Accuracy'):
 
     # Fix the accuracy column for plotting purposes
-    if '%' in df['Accuracy']:
+    if any(df['Accuracy'].str.contains('%')):
         df['Accuracy'] = df['Accuracy'].apply(lambda x: float(re.sub('%', '', x)))
                          
     plt.figure(figsize = (8,8))
